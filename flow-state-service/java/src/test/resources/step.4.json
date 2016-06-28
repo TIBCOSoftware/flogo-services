@@ -1,0 +1,33 @@
+{
+	"flowID": "22934562658c84669dc4c6c896a07935",
+	"id": 4,
+	"state": 1,
+	"status": 2,
+	"stepData": {
+		"status": 0,
+		"state": 1,
+		"wqChanges": [{
+			"ChgType": 1,
+			"Id": 3,
+			"WorkItem": {
+				"id": 3,
+				"execType": 10,
+				"code": 0
+			}
+		}],
+		"tdChanges": [{
+			"ChgType": 3,
+			"Id": 2,
+			"TaskData": null
+		}, {
+			"ChgType": 2,
+			"Id": 4,
+			"TaskData": {
+				"state": 20,
+				"done": false,
+				"attrs": null,
+				"taskId": 3
+			}
+		}]
+	}
+}

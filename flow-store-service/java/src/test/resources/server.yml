@@ -1,0 +1,56 @@
+server:
+  requestLog:
+      appenders:
+        - type: file
+          currentLogFilename: /var/log/access.log
+          archive: false
+  applicationConnectors:
+  - type: http
+    port: 9000
+
+  adminConnectors:
+  - type: http
+    port: 9001
+
+appProperties:
+  storageType: REDIS
+  driverClass:
+  url:
+  username:
+  password:
+  host: 192.168.99.100
+  port: 32768
+  timeOut: 3000
+
+# Logging settings.
+logging:
+
+  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
+  level: INFO
+
+  # Logger-specific levels.
+  loggers:
+
+    # Overrides the level of com.example.dw.Thing and sets it to DEBUG.
+    "com.tibco": ERROR
+    "org.eclipse": INFO
+    "io.dropwizard.jersey": INFO
+    "com.sun.jersey.api.container.filter.LoggingFilter": INFO
+
+  appenders:
+      - type: console
+      - type: file
+        # The file to which current statements will be logged.
+        currentLogFilename: /var/log/error.log
+
+        # When the log file rotates, the archived log will be renamed to this and gzipped. The
+        # %d is replaced with the previous day (yyyy-MM-dd). Custom rolling windows can be created
+        # by passing a SimpleDateFormat-compatible format as an argument: "%d{yyyy-MM-dd-hh}".
+        archivedLogFilenamePattern: /var/log/logs/trs_error-%d.log.gz
+
+        # The number of archived files to keep.
+        archivedFileCount: 5
+
+        # The timezone used to format dates. HINT: USE THE DEFAULT, UTC.
+        timeZone: UTC
+

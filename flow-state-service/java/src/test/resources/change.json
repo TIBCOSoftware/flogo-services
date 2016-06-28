@@ -1,0 +1,2 @@
+{"id":"ABC", "status":500,"state":5000, "change":"{\"status\":0,\"state\":0,\"wqChanges\":[{\"ChgType\":1,\"Id\":2,\"WorkItem\":{\"id\":2,\"execType\":10,\"code\":0}}],\"tdChanges\":[{\"ChgType\":2,\"Id\":1,\"TaskData\":{\"state\":30,\"done\":false,\"attrs\":null,\"taskId\":1}},{\"ChgType\":2,\"Id\":2,\"TaskData\":{\"state\":20,\"done\":false,\"attrs\":null,\"taskId\":2}},{\"ChgType\":2,\"Id\":3,\"TaskData\":{\"state\":10,\"done\":false,\"attrs\":null,\"taskId\":3}}]}"
+}

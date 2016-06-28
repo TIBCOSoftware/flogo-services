@@ -1,0 +1,46 @@
+{
+	"flowID": "22934562658c84669dc4c6c896a07935",
+	"id": 2,
+	"status": 300,
+	"state": 3000,
+	"snapshotData": {"id": "34b6feb13275278f78a17a0bef0950fb",
+		"status": 100,
+		"state": 0,
+		"flowUri": "http://localhost:9090/flows/demo_flow",
+		"workQueue": [{
+			"id": 3,
+			"execType": 10,
+			"code": 0,
+			"taskId": 3
+		}],
+		"rootTaskEnv": {
+			"id": 1,
+			"taskId": 1,
+			"taskDatas": [{
+				"state": 30,
+				"done": false,
+				"attrs": null,
+				"taskId": 1
+			}, {
+				"state": 20,
+				"done": false,
+				"attrs": null,
+				"taskId": 3
+			}, {
+				"state": 10,
+				"done": false,
+				"attrs": null,
+				"taskId": 4
+			}],
+			"linkDatas": [{
+				"state": 2,
+				"attrs": null,
+				"linkId": 1
+			}, {
+				"state": 0,
+				"attrs": null,
+				"linkId": 2
+			}]
+		}
+	}
+}
