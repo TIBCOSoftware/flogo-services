@@ -1,0 +1,44 @@
+version: '2'
+services:
+    flogo-redis:
+        image: redis
+    flogo-flow-service:
+        image: flogo/flow-service
+        build: 
+            context: .
+            dockerfile: Dockerfile-flow-service
+        depends_on:
+        - flogo-redis
+        ports: 
+        - "9090:9090"
+        - "9091:9091"
+        links:
+        - flogo-redis
+        entrypoint:
+        - /tmp/flow-service/docker-start.sh
+        - compile
+        volumes: 
+        - ./flow-store-service/config:/tmp/config
+        environment: 
+        - FLOGO_REDIS_HOST=flogo-redis
+    flogo-state-service:
+        image: flogo/state-service
+        build: 
+            context: .
+            dockerfile: Dockerfile-flow-state-service
+        depends_on:
+        - flogo-redis
+        ports: 
+        - "9190:9190"
+        - "9191:9191"
+        links:
+        - flogo-redis
+        entrypoint:
+        - /tmp/flow-state-service/docker-start.sh
+        - compile
+        volumes: 
+        - ./flow-state-service/config:/tmp/config
+        environment: 
+        - FLOGO_REDIS_HOST=flogo-redis
+
+        

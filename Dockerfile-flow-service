@@ -1,0 +1,16 @@
+FROM alpine:3.3
+MAINTAINER Aditya Wagle
+
+ADD flow-store-service /tmp/flow-service/
+
+ENTRYPOINT /tmp/flow-service/docker-start.sh
+
+EXPOSE 9090 9091
+
+RUN chmod 777 /tmp/flow-service/docker-start.sh && \
+    apk --no-cache --update add openjdk8 bash libstdc++ && \
+    rm -rf /var/cache/apk/*
+    
+WORKDIR /tmp/flow-service
+
+    

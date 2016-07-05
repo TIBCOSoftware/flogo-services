@@ -1,0 +1,15 @@
+FROM alpine:3.3
+MAINTAINER Aditya Wagle
+
+ADD flow-state* /tmp/flow-state-service/
+
+ENTRYPOINT /tmp/flow-state-service/docker-start.sh
+
+EXPOSE 9190 9191
+
+RUN chmod 777 /tmp/flow-state-service/docker-start.sh && \
+    apk --no-cache --update add openjdk8 bash libstdc++ && \
+    rm -rf /var/cache/apk/*
+    
+WORKDIR /tmp/flow-state-service/build/install/state-service/bin/
+    
