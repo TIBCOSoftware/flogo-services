@@ -1,6 +1,6 @@
 # Flogo Services
 
-Flogo services consists of two Services
+Flogo services module consists of two Services
 
 ## State Service
 The Flogo State Service is a service for managing the state of process flows executed on Flogo Engine. This service's primary job is to store process (incremental and full) state for flows that are executed on an engine. This service will also facilitate front-end introspection and debugging of process flows.
@@ -15,3 +15,8 @@ The services just depend on docker. You can install docker from [docker website]
 ## Running the Services
 
 `docker-compose up`
+
+This builds and starts both services in a docker environment. A `redis` image is required and is pulled as part of docker-compose up.
+
+## License
+License information goes here. This needs to be updated before we make this repository public.
