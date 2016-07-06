@@ -7,7 +7,7 @@
 		"id": "22934562658c84669dc4c6c896a07935",
 		"status": 100,
 		"state": 0,
-		"flowUri": "1",
+		"processUri": "1",
 		"workQueue": [{
 			"id": 2,
 			"execType": 10,
@@ -50,7 +50,7 @@
 					"type": "string",
 					"value": "REST results"
 				}, {
-					"name": "flowInfo",
+					"name": "processInfo",
 					"type": "boolean",
 					"value": "true"
 				}],

@@ -4,24 +4,33 @@ package com.tibco.flogo.ss.obj;
  * Created by mregiste on 2/21/2016.
  */
 
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class TdChange
 {
+    private static final Logger LOG = LoggerFactory.getLogger(TdChange.class.getName());
 
-    private Integer  ChgType;
-    private Integer  Id;
-    private TaskData TaskData;
+    @JsonProperty("ChgType")
+    private Integer  chgType;
+    @JsonProperty("ID")
+    private Integer  id;
+    @JsonProperty("TaskData")
+    private TaskData taskData;
 
     public TdChange()
     {
     }
 
-    public TdChange(Integer chgType, Integer id, com.tibco.flogo.ss.obj.TaskData taskData)
+    public TdChange(Integer chgType, Integer id, TaskData taskData)
     {
-        ChgType = chgType;
-        Id = id;
-        TaskData = taskData;
+        this.chgType = chgType;
+        this.id = id;
+        this.taskData = taskData;
     }
 
     /**
@@ -29,7 +38,7 @@ public class TdChange
      */
     public Integer getChgType()
     {
-        return ChgType;
+        return chgType;
     }
 
     /**
@@ -37,7 +46,7 @@ public class TdChange
      */
     public void setChgType(Integer ChgType)
     {
-        this.ChgType = ChgType;
+        this.chgType = ChgType;
     }
 
     /**
@@ -45,7 +54,7 @@ public class TdChange
      */
     public Integer getId()
     {
-        return Id;
+        return id;
     }
 
     /**
@@ -53,7 +62,7 @@ public class TdChange
      */
     public void setId(Integer Id)
     {
-        this.Id = Id;
+        this.id = Id;
     }
 
     /**
@@ -61,23 +70,37 @@ public class TdChange
      */
     public TaskData getTaskData()
     {
-        return TaskData;
+        return taskData;
     }
 
     /**
-     * @param TaskData The TaskData
+     * @param taskData The TaskData
      */
-    public void setTaskData(TaskData TaskData)
+    public void setTaskData(TaskData taskData)
     {
-        this.TaskData = TaskData;
+        this.taskData = taskData;
     }
 
     @Override
     public String toString() {
         return "TdChange{" +
-                       "ChgType=" + ChgType +
-                       ", Id=" + Id +
-                       ", TaskData=" + TaskData +
+                       "ChgType=" + chgType +
+                       ", Id=" + id +
+                       ", TaskData=" + taskData +
                        '}';
+    }
+
+    public String toJson()
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        try
+        {
+            return mapper.writeValueAsString(this);
+        }
+        catch (IOException e)
+        {
+            LOG.error("Account JSON conversion error");
+            return null;
+        }
     }
 }

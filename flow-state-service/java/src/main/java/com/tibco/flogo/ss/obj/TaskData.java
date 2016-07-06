@@ -4,100 +4,81 @@ package com.tibco.flogo.ss.obj;
  * Created by mregiste on 2/21/2016.
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TaskData
 {
+    private static final Logger LOG = LoggerFactory.getLogger(TaskData.class.getName());
 
-    private Integer state;
-    private Boolean done;
-    private Object  attrs;
-    private Integer taskID;
+    private String state;
+    private List<Attribute> attrs = new ArrayList<Attribute>();
+    private String taskId;
 
-    public TaskData()
-    {
+    public TaskData() {
     }
 
-    public TaskData(Integer state, Boolean done, Object attrs, Integer taskId)
-    {
+    public TaskData(String state, List<Attribute> attrs, String taskId) {
         this.state = state;
-        this.done = done;
         this.attrs = attrs;
-        this.taskID = taskID;
+        this.taskId = taskId;
     }
 
-    /**
-     * @return The status
-     */
-    public Integer getState()
-    {
+    public static Logger getLOG() {
+        return LOG;
+    }
+
+    public String getState() {
         return state;
     }
 
-    /**
-     * @param state The status
-     */
-    public void setState(Integer state)
-    {
+    public void setState(String state) {
         this.state = state;
     }
 
-    /**
-     * @return The done
-     */
-    public Boolean getDone()
-    {
-        return done;
-    }
-
-    /**
-     * @param done The done
-     */
-    public void setDone(Boolean done)
-    {
-        this.done = done;
-    }
-
-    /**
-     * @return The attrs
-     */
-    public Object getAttrs()
-    {
+    public List<Attribute> getAttrs() {
         return attrs;
     }
 
-    /**
-     * @param attrs The attrs
-     */
-    public void setAttrs(Object attrs)
-    {
+    public void setAttrs(List<Attribute> attrs) {
         this.attrs = attrs;
     }
 
-    /**
-     * @return The taskId
-     */
-    public Integer getTaskID()
-    {
-        return taskID;
+    public String getTaskId() {
+        return taskId;
     }
 
-    /**
-     * @param taskId The taskId
-     */
-    public void setTaskID(Integer taskId)
-    {
-        this.taskID = taskId;
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
     }
 
     @Override
     public String toString() {
         return "TaskData{" +
-                       "state=" + state +
-                       ", done=" + done +
-                       ", attrs=" + attrs +
-                       ", taskId=" + taskID +
-                       '}';
+                "state='" + state + '\'' +
+                ", attrs=" + attrs +
+                ", taskId='" + taskId + '\'' +
+                '}';
+    }
+
+    public String toJson()
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        try
+        {
+            return mapper.writeValueAsString(this);
+        }
+        catch (IOException e)
+        {
+            LOG.error("Account JSON conversion error");
+            return null;
+        }
     }
 }

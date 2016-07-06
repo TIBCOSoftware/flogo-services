@@ -7,7 +7,7 @@ import java.util.Map;
 public class Snapshot {
 
     private Integer id;
-    private String flowID;
+    private String processID;
     private Integer state;
     private Integer status;
     private SnapshotData snapshotData;
@@ -33,19 +33,19 @@ public class Snapshot {
     /**
      *
      * @return
-     * The flowID
+     * The processID
      */
-    public String getFlowID() {
-        return flowID;
+    public String getProcessID() {
+        return processID;
     }
 
     /**
      *
-     * @param flowID
-     * The flowID
+     * @param processID
+     * The processID
      */
-    public void setFlowID(String flowID) {
-        this.flowID = flowID;
+    public void setProcessID(String processID) {
+        this.processID = processID;
     }
 
     /**
@@ -106,7 +106,7 @@ public class Snapshot {
     public String toString() {
         return "Snapshot{" +
                        "id=" + id +
-                       ", flowID='" + flowID + '\'' +
+                       ", processID='" + processID + '\'' +
                        ", state=" + state +
                        ", status=" + status +
                        ", snapshotData=" + snapshotData +

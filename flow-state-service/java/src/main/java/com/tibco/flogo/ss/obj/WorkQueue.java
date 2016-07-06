@@ -1,9 +1,17 @@
 package com.tibco.flogo.ss.obj;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+
 /**
  * Created by mregiste on 3/3/2016.
  */
 public class WorkQueue {
+    private static final Logger LOG = LoggerFactory.getLogger(WorkQueue.class.getName());
+
     private Integer id;
     private Integer execType;
     private Integer code;
@@ -89,5 +97,19 @@ public class WorkQueue {
                        ", code=" + code +
                        ", taskID=" + taskID +
                        '}';
+    }
+
+    public String toJson()
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        try
+        {
+            return mapper.writeValueAsString(this);
+        }
+        catch (IOException e)
+        {
+            LOG.error("Account JSON conversion error");
+            return null;
+        }
     }
 }

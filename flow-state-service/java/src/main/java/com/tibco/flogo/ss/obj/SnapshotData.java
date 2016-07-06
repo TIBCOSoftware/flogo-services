@@ -11,7 +11,7 @@ public class SnapshotData {
     private Integer status;
     private Integer state;
     private List<Attribute> attrs = new ArrayList<Attribute>();
-    private String flowURI;
+    private String processURI;
     private List<WorkQueue> workQueue = new ArrayList<WorkQueue>();
     private RootTask rootTask;
 
@@ -90,19 +90,19 @@ public class SnapshotData {
     /**
      *
      * @return
-     * The flowURI
+     * The processURI
      */
-    public String getFlowURI() {
-        return flowURI;
+    public String getProcessURI() {
+        return processURI;
     }
 
     /**
      *
-     * @param flowURI
-     * The flowURI
+     * @param processURI
+     * The processURI
      */
-    public void setFlowURI(String flowURI) {
-        this.flowURI = flowURI;
+    public void setProcessURI(String processURI) {
+        this.processURI = processURI;
     }
 
     /**
@@ -148,7 +148,7 @@ public class SnapshotData {
                        ", status=" + status +
                        ", state=" + state +
                        ", attrs=" + attrs +
-                       ", flowURI='" + flowURI + '\'' +
+                       ", processURI='" + processURI + '\'' +
                        ", workQueue=" + workQueue +
                        ", rootTask=" + rootTask +
                        '}';

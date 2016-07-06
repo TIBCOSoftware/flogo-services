@@ -28,12 +28,12 @@ public class InstanceResource
     private final ObjectMapper mapper = new ObjectMapper();
 
     @GET()
-    @Path("{flowID}/status")
-    public Map<String, String> getSnapshotStatus(@PathParam("flowID") String flowID)
+    @Path("{processID}/status")
+    public Map<String, String> getSnapshotStatus(@PathParam("processID") String processID)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().getInstanceStatus(flowID);
+            return ConfigDaoImpl.getInstance().getInstanceStatus(processID);
         }
         catch (Exception ex)
         {
@@ -43,12 +43,12 @@ public class InstanceResource
     }
 
     @GET()
-    @Path("{flowID}")
-    public Map<String, Object> listSteps(@PathParam("flowID") String flowID)
+    @Path("{processID}")
+    public Map<String, Object> listSteps(@PathParam("processID") String processID)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().listSteps(flowID, true);
+            return ConfigDaoImpl.getInstance().listSteps(processID, true);
         }
         catch (Exception ex)
         {
@@ -58,12 +58,12 @@ public class InstanceResource
     }
 
     @GET()
-    @Path("{flowID}/snapshot/{id}")
-    public String getSnapshotStep(@PathParam("flowID") String flowID, @PathParam("id") String id)
+    @Path("{processID}/snapshot/{id}")
+    public String getSnapshotStep(@PathParam("processID") String processID, @PathParam("id") String id)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().getSnapshotStep(flowID, id);
+            return ConfigDaoImpl.getInstance().getSnapshotStep(processID, id);
         }
         catch (Exception ex)
         {
@@ -73,12 +73,12 @@ public class InstanceResource
     }
 
     @GET()
-    @Path("{flowID}/steps")
-    public Map<String, Object> getInstanceSteps(@PathParam("flowID") String flowID)
+    @Path("{processID}/steps")
+    public Map<String, Object> getInstanceSteps(@PathParam("processID") String processID)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().listSteps(flowID, false);
+            return ConfigDaoImpl.getInstance().listSteps(processID, false);
         }
         catch (Exception ex)
         {
@@ -88,8 +88,8 @@ public class InstanceResource
     }
 
     @GET()
-    @Path("{flowID}/metadata")
-    public Map<String,String> flowMetaData(@PathParam("flowID") String id)
+    @Path("{processID}/metadata")
+    public Map<String,String> processMetaData(@PathParam("processID") String id)
     {
         try
         {
@@ -112,9 +112,9 @@ public class InstanceResource
 
             List<Map<String, String>> results = new ArrayList<>(names.size());
 
-            for (String flowID : names)
+            for (String processID : names)
             {
-                results.add(ConfigDaoImpl.getInstance().getSnapshotMetadata(flowID));
+                results.add(ConfigDaoImpl.getInstance().getSnapshotMetadata(processID));
             }
 
             return results;
@@ -147,7 +147,7 @@ public class InstanceResource
         long ret;
         try
         {
-            ret = ConfigDaoImpl.getInstance().saveStep((String)changeInfo.get("flowID"), (Integer)changeInfo.get("id"),
+            ret = ConfigDaoImpl.getInstance().saveStep((String)changeInfo.get("processID"), (Integer)changeInfo.get("id"),
                     (Integer)changeInfo.get("state"), (Integer)changeInfo.get("status"), changeInfo.get("stepData"));
         }
         catch (Exception ex)
@@ -169,7 +169,7 @@ public class InstanceResource
         long ret;
         try
         {
-            ret = ConfigDaoImpl.getInstance().saveSnapshot((String)snapshotInfo.get("flowID"), (Integer)snapshotInfo.get("id"),
+            ret = ConfigDaoImpl.getInstance().saveSnapshot((String)snapshotInfo.get("processID"), (Integer)snapshotInfo.get("id"),
                     (Integer)snapshotInfo.get("status"), (Integer)snapshotInfo.get("state"), snapshotInfo.get("snapshotData"));
         }
         catch (Exception ex)
@@ -186,21 +186,21 @@ public class InstanceResource
     }
 
     @DELETE()
-    @Path("/{flowID}")
-    public void deleteFlow(@PathParam("flowID") String flowID)
+    @Path("/{processID}")
+    public void deleteProcess(@PathParam("processID") String processID)
     {
         long ret;
         try
         {
-            ret = ConfigDaoImpl.getInstance().removeSnapshot(flowID);
+            ret = ConfigDaoImpl.getInstance().removeSnapshot(processID);
         }
         catch (Exception ex)
         {
-            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Delete for snapshot: " + flowID + " failed: "
+            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Delete for snapshot: " + processID + " failed: "
                                                                              + ex.getMessage());
         }
 
         if (ret == 0)
-            throw new CustomException(Response.Status.NOT_FOUND, "Snapshot: " + flowID + " not found");
+            throw new CustomException(Response.Status.NOT_FOUND, "Snapshot: " + processID + " not found");
     }
 }

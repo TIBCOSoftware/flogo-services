@@ -76,7 +76,7 @@ public class StepResource
         long ret;
         try
         {
-            ret = ConfigDaoImpl.getInstance().saveStep((String)changeInfo.get("flowID"), (Integer)changeInfo.get("id"),
+            ret = ConfigDaoImpl.getInstance().saveStep((String)changeInfo.get("processID"), (Integer)changeInfo.get("id"),
                     (Integer)changeInfo.get("state"), (Integer)changeInfo.get("status"), changeInfo.get("stepData"));
         }
         catch (Exception ex)
@@ -93,7 +93,7 @@ public class StepResource
 
     @DELETE()
     @Path("{id}")
-    public void deleteFlow(@PathParam("id") String id)
+    public void deleteProcess(@PathParam("id") String id)
     {
         long ret;
         try

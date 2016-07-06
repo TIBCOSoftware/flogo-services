@@ -39,7 +39,7 @@ public class TestSnapshot {
         Snapshot snapshot = new Snapshot();
         snapshot.setSnapshotData(snapshotData);
         snapshot.setId(Integer.valueOf(snaphsot.get("id")));
-        snapshot.setFlowID(snaphsot.get("flowID"));
+        snapshot.setProcessID(snaphsot.get("processID"));
         snapshot.setState(Integer.valueOf(snaphsot.get("state")));
         snapshot.setStatus(Integer.valueOf(snaphsot.get("status")));
         System.out.println(snapshot);

@@ -1,12 +1,12 @@
 {
-	"flowID": "22934562658c84669dc4c6c896a07935",
+	"processID": "22934562658c84669dc4c6c896a07935",
 	"id": 2,
 	"status": 300,
 	"state": 3000,
 	"snapshotData": {"id": "34b6feb13275278f78a17a0bef0950fb",
 		"status": 100,
 		"state": 0,
-		"flowUri": "http://localhost:9090/flows/demo_flow",
+		"processUri": "http://localhost:9090/processes/demo_process",
 		"workQueue": [{
 			"id": 3,
 			"execType": 10,
