@@ -4,12 +4,16 @@ package com.tibco.flogo.ss.obj;
  * Created by mregiste on 2/21/2016.
  */
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ChangeObj
 {
 
     private Integer id;
     private Integer sequence;
     private Change  change;
+    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     public ChangeObj()
     {

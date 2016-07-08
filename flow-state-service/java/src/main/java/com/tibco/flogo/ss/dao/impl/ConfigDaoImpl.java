@@ -1,6 +1,5 @@
 package com.tibco.flogo.ss.dao.impl;
 
-import com.tibco.flogo.ss.dao.ConfigDao;
 import com.tibco.flogo.ss.dao.DataDao;
 import com.tibco.flogo.ss.service.PropertyClient;
 import com.tibco.flogo.ss.util.StorageType;

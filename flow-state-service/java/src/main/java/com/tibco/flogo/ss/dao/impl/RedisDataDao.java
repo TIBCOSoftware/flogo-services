@@ -2,8 +2,6 @@ package com.tibco.flogo.ss.dao.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tibco.flogo.ss.dao.DataDao;
-import com.tibco.flogo.ss.obj.SnapshotData;
-import com.tibco.flogo.ss.obj.StepData;
 import com.tibco.flogo.ss.obj.StepInfo;
 import com.tibco.flogo.ss.obj.SnapshotInfo;
 import com.tibco.flogo.ss.service.PropertyClient;
@@ -20,17 +18,18 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class RedisDataDao implements DataDao
 {
-    private static       RedisDataDao theInstance = new RedisDataDao();
+    private AtomicLong m_atomicLong = new AtomicLong();
+
     private static final Logger LOG = Logger.getLogger(RedisDataDao.class);
     private static JedisPool m_pool;
 
     private static final String INSTANCE_NAMESPACE      = "instance:";
     private static final String STEP_NAMESPACE        = "step:";
     private static final String STEPS_NAMESPACE       = "steps:";
-    private static final String STEP_PROCESSES_KEY    = "stepProcesses";
+    private static final String STEP_FLOWS_KEY    = "stepFlows";
     private static final String SNAPSHOT_NAMESPACE      = "snapshot:";
     private static final String SNAPSHOTS_NAMESPACE      = "snapshots:";
-    private static final String SNAPSHOTS_PROCESSES_KEY = "snapshotProcesses";
+    private static final String SNAPSHOTS_FLOWS_KEY = "snapshotFlows";
 
     public boolean config(PropertyClient propertyClient)
     {
@@ -53,13 +52,13 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    public Map<String, String> getSnapshot(String processID, int version)
+    public Map<String, String> getSnapshot(String flowID, int version)
     {
         Jedis jedis = null;
         try
         {
             jedis = m_pool.getResource();
-            return jedis.hgetAll(SNAPSHOT_NAMESPACE + processID +":" +version);
+            return jedis.hgetAll(SNAPSHOT_NAMESPACE + flowID +":" +version);
         }
         finally
         {
@@ -71,7 +70,7 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    public long saveSnapshot(String processID, Integer id, Integer status, Integer state, Object snapshotObject)
+    public long saveSnapshot(String flowID, Integer id, Integer status, Integer state, Object snapshotObject)
     {
         Jedis jedis = null;
         try
@@ -89,7 +88,7 @@ public class RedisDataDao implements DataDao
             }
 
             Map<String, String> snapshot = new HashMap<String, String>();
-            snapshot.put(SnapshotInfo.PROCESS_ID, String.valueOf(processID));
+            snapshot.put(SnapshotInfo.FLOW_ID, String.valueOf(flowID));
             snapshot.put(SnapshotInfo.ID, String.valueOf(id));
             snapshot.put(SnapshotInfo.STATUS, String.valueOf(status));
             snapshot.put(SnapshotInfo.STATE, String.valueOf(state));
@@ -97,10 +96,10 @@ public class RedisDataDao implements DataDao
             snapshot.put(SnapshotInfo.DATE, String.valueOf(new Date()));
 
             Transaction t = jedis.multi();
-            String key = SNAPSHOT_NAMESPACE + processID + ":" + id;
-            t.sadd(SNAPSHOTS_PROCESSES_KEY, processID + ":" +id); //add snapshot to list
+            String key = SNAPSHOT_NAMESPACE + flowID + ":" + id;
+            t.sadd(SNAPSHOTS_FLOWS_KEY, flowID + ":" +id); //add snapshot to list
             t.hmset(key, snapshot); //add individual snapshot
-            Response<Long> addSnapshotListResp = t.rpush(SNAPSHOTS_NAMESPACE + processID, key); //add stepData to stepData list
+            Response<Long> addSnapshotListResp = t.rpush(SNAPSHOTS_NAMESPACE + flowID, key); //add stepData to stepData list
 
             t.exec();
             return addSnapshotListResp.get();
@@ -115,15 +114,15 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    public long removeSnapshot(String processID)
+    public long removeSnapshot(String flowID)
     {
         Jedis jedis = null;
         try
         {
             jedis = m_pool.getResource();
             Transaction t = jedis.multi();
-            Response<Long> remProcListResp = t.srem(SNAPSHOTS_PROCESSES_KEY, processID);
-            Response<Long> remProcResp = t.del(SNAPSHOT_NAMESPACE, processID);
+            Response<Long> remProcListResp = t.srem(SNAPSHOTS_FLOWS_KEY, flowID);
+            Response<Long> remProcResp = t.del(SNAPSHOT_NAMESPACE, flowID);
             t.exec();
             return remProcResp.get();
         }
@@ -143,7 +142,7 @@ public class RedisDataDao implements DataDao
         try
         {
             jedis = m_pool.getResource();
-            return jedis.sinter(SNAPSHOTS_PROCESSES_KEY);
+            return jedis.sinter(SNAPSHOTS_FLOWS_KEY);
         }
         finally
         {
@@ -184,19 +183,19 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    public Map<String, String> getSnapshotMetadata(String processID)
+    public Map<String, String> getSnapshotMetadata(String flowID)
     {
         Jedis jedis = null;
         try
         {
             jedis = m_pool.getResource();
-            String status = jedis.hget(SNAPSHOT_NAMESPACE + processID, SnapshotInfo.STATUS);
-            String state = jedis.hget(SNAPSHOT_NAMESPACE + processID, SnapshotInfo.STATE);
-            String date = jedis.hget(SNAPSHOT_NAMESPACE + processID, SnapshotInfo.DATE);
-            String id = jedis.hget(SNAPSHOT_NAMESPACE + processID, SnapshotInfo.ID);
+            String status = jedis.hget(SNAPSHOT_NAMESPACE + flowID, SnapshotInfo.STATUS);
+            String state = jedis.hget(SNAPSHOT_NAMESPACE + flowID, SnapshotInfo.STATE);
+            String date = jedis.hget(SNAPSHOT_NAMESPACE + flowID, SnapshotInfo.DATE);
+            String id = jedis.hget(SNAPSHOT_NAMESPACE + flowID, SnapshotInfo.ID);
 
             Map<String, String> metaData = new HashMap<>();
-            metaData.put(SnapshotInfo.PROCESS_ID, processID);
+            metaData.put(SnapshotInfo.FLOW_ID, flowID);
             metaData.put(SnapshotInfo.ID, id);
             metaData.put(SnapshotInfo.STATUS, status);
             metaData.put(SnapshotInfo.STATE, state);
@@ -214,16 +213,16 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    public Map<String, String> getInstanceStatus(String processID)
+    public Map<String, String> getInstanceStatus(String flowID)
     {
         Jedis jedis = null;
         try
         {
             jedis = m_pool.getResource();
-            String status = jedis.hget(INSTANCE_NAMESPACE + processID, "status");
+            String status = jedis.hget(INSTANCE_NAMESPACE + flowID, "status");
 
             Map<String, String> metaData = new HashMap<>();
-            metaData.put(SnapshotInfo.ID, processID);
+            metaData.put(SnapshotInfo.ID, flowID);
             metaData.put(SnapshotInfo.STATUS, status);
 
             return metaData;
@@ -238,16 +237,16 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    public Map<String, String> getSnapshotStatus(String processID)
+    public Map<String, String> getSnapshotStatus(String flowID)
     {
         Jedis jedis = null;
         try
         {
             jedis = m_pool.getResource();
-            String status = jedis.hget(SNAPSHOT_NAMESPACE + processID, SnapshotInfo.STATUS);
+            String status = jedis.hget(SNAPSHOT_NAMESPACE + flowID, SnapshotInfo.STATUS);
 
             Map<String, String> metaData = new HashMap<>();
-            metaData.put(SnapshotInfo.PROCESS_ID, processID);
+            metaData.put(SnapshotInfo.FLOW_ID, flowID);
             metaData.put(SnapshotInfo.STATUS, status);
 
             return metaData;
@@ -263,7 +262,7 @@ public class RedisDataDao implements DataDao
 
 
     @Override
-    public Map<String, Object> listSteps(String processID, boolean withStatus)
+    public Map<String, Object> listSteps(String flowID, boolean withStatus)
     {
         Jedis jedis = null;
         try
@@ -274,14 +273,14 @@ public class RedisDataDao implements DataDao
             LinkedHashMap changesMap;
             LinkedHashMap snapshotMap = null;
             // get list of step entries
-            List<String> changes = jedis.lrange(STEPS_NAMESPACE + processID, 0, -1);
+            List<String> changes = jedis.lrange(STEPS_NAMESPACE + flowID, 0, -1);
             if(changes == null || changes.isEmpty())
-                LOG.debug("Steps for instance: " +processID +" not found");
+                LOG.debug("Steps for instance: " +flowID +" not found");
             Map<String, Object> results = new HashMap<String, Object>();
             List steps = new ArrayList<Object>();
             List tasks = new ArrayList<Object>();
             Map<String, Object> taskMetadata = new HashMap<String, Object>();
-            Map<String, Object> processMetatdata = new HashMap<>();
+            Map<String, Object> flowMetatdata = new HashMap<String, Object>();
             Map<String, Object> step = new HashMap<String, Object>();
             for (String change : changes)
             {
@@ -301,13 +300,13 @@ public class RedisDataDao implements DataDao
                     if(tdChanges != null) {
                         for (LinkedHashMap tdChange : tdChanges) {
                             taskId = (Integer) tdChange.get("ID");
-                            String jsonSnapshot = jedis.hget(SNAPSHOT_NAMESPACE + processID + ":" + stepId, "snapshotData");
+                            String jsonSnapshot = jedis.hget(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData");
                             if (jsonSnapshot != null) {
                                 ObjectMapper snapshotMapper = new ObjectMapper();
                                 try {
                                     snapshotMap = snapshotMapper.readValue(jsonSnapshot, LinkedHashMap.class);
                                     if(snapshotMap == null)
-                                        LOG.debug("Object mapper failed to convert snapshot: " +SNAPSHOT_NAMESPACE + processID + ":" + stepId);
+                                        LOG.debug("Object mapper failed to convert snapshot: " +SNAPSHOT_NAMESPACE + flowID + ":" + stepId);
                                     LinkedHashMap rootTaskEnv = (LinkedHashMap) snapshotMap.get("rootTaskEnv");
                                     ArrayList<LinkedHashMap> taskDatas = (ArrayList) rootTaskEnv.get("taskDatas");
                                     if(taskDatas != null) {
@@ -329,19 +328,19 @@ public class RedisDataDao implements DataDao
                                         }
                                     }
                                     else
-                                        LOG.debug("Task datas not found for snapshot: " +SNAPSHOT_NAMESPACE + processID + ":" + stepId);
+                                        LOG.debug("Task datas not found for snapshot: " +SNAPSHOT_NAMESPACE + flowID + ":" + stepId);
                                 } catch (Exception e) {
                                     LOG.debug("Exception in listSteps(snapshot)", e);
                                 }
                             }
                             else
-                                LOG.debug("Snapshot for instance step: " +processID + ":" + stepId +" not found");
+                                LOG.debug("Snapshot for instance step: " +flowID + ":" + stepId +" not found");
                         }
                     }
 
                     // no tdChanges found
                     if(snapshotMap == null) {
-                        String jsonSnapshot = jedis.hget(SNAPSHOT_NAMESPACE + processID + ":" + stepId, "snapshotData");
+                        String jsonSnapshot = jedis.hget(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData");
                         if(jsonSnapshot != null) {
                             ObjectMapper snapshotMapper = new ObjectMapper();
                             snapshotMap = snapshotMapper.readValue(jsonSnapshot, LinkedHashMap.class);
@@ -364,18 +363,18 @@ public class RedisDataDao implements DataDao
                             if(stepTaskId == null)
                                 stepTaskId = 1;
                         }
-                        ArrayList processAttrs = (ArrayList) snapshotMap.get("attrs");
-                        if(processAttrs != null) {
-                            processMetatdata.put("state", snapshotMap.get("state"));
-                            processMetatdata.put("status", snapshotMap.get("status"));
-                            processMetatdata.put("attributes", processAttrs);
-                            step.put("process", processMetatdata);
+                        ArrayList flowAttrs = (ArrayList) snapshotMap.get("attrs");
+                        if(flowAttrs != null) {
+                            flowMetatdata.put("state", snapshotMap.get("state"));
+                            flowMetatdata.put("status", snapshotMap.get("status"));
+                            flowMetatdata.put("attributes", flowAttrs);
+                            step.put("flow", flowMetatdata);
                         }
                         step.put("taskId", stepTaskId);
                         step.put("id", stepId);
 
                         // clear
-                        processMetatdata = new HashMap<String, Object>();
+                        flowMetatdata = new HashMap<String, Object>();
                         step.put("tasks", tasks);
                         // clear
                         tasks = new ArrayList<Object>();
@@ -393,8 +392,8 @@ public class RedisDataDao implements DataDao
 
             if(withStatus)
             {
-                Map<String, String> processStatus = ConfigDaoImpl.getInstance().getInstanceStatus(processID);
-                results.put("status", processStatus.get("status"));
+                Map<String, String> flowStatus = ConfigDaoImpl.getInstance().getInstanceStatus(flowID);
+                results.put("status", flowStatus.get("status"));
             }
 
             results.put("steps", steps);
@@ -418,7 +417,7 @@ public class RedisDataDao implements DataDao
         {
             jedis = m_pool.getResource();
 
-            Set<String> all = jedis.sinter(STEP_PROCESSES_KEY);
+            Set<String> all = jedis.sinter(STEP_FLOWS_KEY);
             List<Map<String, String>> results = new ArrayList<>(all.size());
             for (String id : all)
             {
@@ -437,7 +436,7 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    public long saveStep(String processID, Integer id, Integer state, Integer status, Object stepInfo)
+    public long saveStep(String flowID, Integer id, Integer state, Integer status, Object stepInfo)
     {
         Jedis jedis = null;
         try
@@ -455,7 +454,7 @@ public class RedisDataDao implements DataDao
             }
 
             Map<String, String> change = new HashMap<String, String>();
-            change.put(StepInfo.PROCESS_ID, processID);
+            change.put(StepInfo.FLOW_ID, flowID);
             change.put(StepInfo.ID, String.valueOf(id));
             change.put(StepInfo.STEP_DATA, stepString);
             change.put(StepInfo.STATE, String.valueOf(state));
@@ -463,14 +462,14 @@ public class RedisDataDao implements DataDao
             change.put(StepInfo.DATE, String.valueOf(new Date()));
 
             Transaction t = jedis.multi();
-            String key = STEP_NAMESPACE + processID + ":" + id;
+            String key = STEP_NAMESPACE + flowID + ":" + id;
 
-            // add process status
-            t.hmset(INSTANCE_NAMESPACE + processID, new HashMap<String, String>(){{put("status", String.valueOf(status));}});
+            // add flow status
+            t.hmset(INSTANCE_NAMESPACE + flowID, new HashMap<String, String>(){{put("status", String.valueOf(status));}});
 
-            t.sadd(STEP_PROCESSES_KEY, processID + ":" +id); //add process to list
+            t.sadd(STEP_FLOWS_KEY, flowID + ":" +id); //add flow to list
             t.hmset(key, change); //add individual stepData
-            Response<Long> addChangeListResp = t.rpush(STEPS_NAMESPACE + processID, key); //add stepData to stepData list
+            Response<Long> addChangeListResp = t.rpush(STEPS_NAMESPACE + flowID, key); //add stepData to stepData list
             t.exec();
             return addChangeListResp.get();
         }
@@ -486,46 +485,45 @@ public class RedisDataDao implements DataDao
     @Override
     public long saveStep(StepInfo stepInfo)
     {
-//        Jedis jedis = null;
-//        try
-//        {
-//            jedis = m_pool.getResource();
-//
-//            Map<String, String> change = new HashMap<String, String>();
-//            change.put(StepInfo.ID, stepInfo.getId());
-//            change.put(StepInfo.STEP_DATA, stepInfo.getStepData());
-//            change.put(StepInfo.STATE, stepInfo.getState());
-//            change.put(StepInfo.STATUS, stepInfo.getStatus());
-//            change.put(StepInfo.DATE, String.valueOf(new Date()));
-//
-//            Transaction t = jedis.multi();
-//            String key = STEP_NAMESPACE + stepInfo.getProcessId() + ":" + stepInfo.getId();
-//
-//            t.sadd(STEP_PROCESSES_KEY, stepInfo.getProcessId()); //add process to list
-//            t.hmset(key, change); //add individual stepData
-//            Response<Long> addChangeListResp = t.rpush(STEP_NAMESPACE + stepInfo.getProcessId(), key); //add stepData to stepData list
-//            t.exec();
-//            return addChangeListResp.get();
-//        }
-//        finally
-//        {
-//            if (jedis != null)
-//            {
-//                jedis.close();
-//            }
-//        }
-        return 0l;
+        Jedis jedis = null;
+        try
+        {
+            jedis = m_pool.getResource();
+
+            Map<String, String> change = new HashMap<String, String>();
+            change.put(StepInfo.ID, stepInfo.getId());
+            change.put(StepInfo.STEP_DATA, stepInfo.getStepData());
+            change.put(StepInfo.STATE, stepInfo.getState());
+            change.put(StepInfo.STATUS, stepInfo.getStatus());
+            change.put(StepInfo.DATE, String.valueOf(new Date()));
+
+            Transaction t = jedis.multi();
+            String key = STEP_NAMESPACE + stepInfo.getFlowId() + ":" + stepInfo.getId();
+
+            t.sadd(STEP_FLOWS_KEY, stepInfo.getFlowId()); //add flow to list
+            t.hmset(key, change); //add individual stepData
+            Response<Long> addChangeListResp = t.rpush(STEP_NAMESPACE + stepInfo.getFlowId(), key); //add stepData to stepData list
+            t.exec();
+            return addChangeListResp.get();
+        }
+        finally
+        {
+            if (jedis != null)
+            {
+                jedis.close();
+            }
+        }
     }
 
     @Override
-    public long removeStep(String processID)
+    public long removeStep(String flowID)
     {
         Jedis jedis = null;
         try
         {
             jedis = m_pool.getResource();
 
-            Set<String> keys = jedis.keys(STEP_NAMESPACE + processID + ":");
+            Set<String> keys = jedis.keys(STEP_NAMESPACE + flowID + ":");
             for (String key : keys) {
                 jedis.del(key);
             }
@@ -537,8 +535,8 @@ public class RedisDataDao implements DataDao
                 t.del(key);
             }
 
-            t.del(STEP_NAMESPACE + processID);
-            Response<Long> remChangeResp = t.srem(STEP_PROCESSES_KEY, processID);
+            t.del(STEP_NAMESPACE + flowID);
+            Response<Long> remChangeResp = t.srem(STEP_FLOWS_KEY, flowID);
 
             t.exec();
             return (remChangeResp == null) ? 0 : remChangeResp.get();
@@ -553,16 +551,13 @@ public class RedisDataDao implements DataDao
     }
 
     @Override
-    /**
-     * todo: not sure this works
-     */
-    public Map<String, String> getStepMetadata(String processID)
+    public Map<String, String> getStepMetadata(String flowID)
     {
         Jedis jedis = null;
         try
         {
             jedis = m_pool.getResource();
-            List<String> changes = jedis.lrange(STEP_NAMESPACE + processID,-1L,-1L);
+            List<String> changes = jedis.lrange(STEP_NAMESPACE + flowID,-1L,-1L);
 
 
             if (!changes.isEmpty())
@@ -590,63 +585,7 @@ public class RedisDataDao implements DataDao
                 jedis.close();
             }
         }
-    }
 
-    @Override
-    public List<StepInfo> getStepInfo(String processID)
-    {
-        ArrayList<StepInfo> stepInfoArray = new ArrayList<>();
-        StepInfo stepInfo = null;
-        Jedis jedis = null;
-        try
-        {
-            jedis = m_pool.getResource();
-
-
-            List<String> steps = jedis.lrange(STEPS_NAMESPACE + processID, 0, -1);
-            if(steps == null || steps.isEmpty())
-                LOG.debug("Steps for instance: " +processID +" not found");
-            Map<String, Object> results = new HashMap<String, Object>();
-            for (String step : steps)
-            {
-                Map<String, String> changesJson = jedis.hgetAll(step);
-                if(changesJson == null)
-                    LOG.debug("Step: " +step +" not found");
-                stepInfo = new StepInfo();
-
-                String changeId = jedis.hget(step, StepInfo.ID);
-                stepInfo.setId(changeId);
-
-                String state = jedis.hget(step, StepInfo.STATE);
-                stepInfo.setState(state);
-
-                String status = jedis.hget(step, StepInfo.STATUS);
-                stepInfo.setStatus(status);
-
-                // todo - mjr add creation date?
-//                String creationDate = jedis.hget(change, StepInfo.DATE);
-//                stepInfo.set(changeId);
-
-                String stepDataJson = jedis.hget(step, StepInfo.STEP_DATA);
-                try {
-                    ObjectMapper mapper = new ObjectMapper();
-                    StepData stepData = mapper.readValue(stepDataJson, StepData.class);
-                    stepInfo.setStepData(stepData);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                stepInfoArray.add(stepInfo);
-            }
-            return stepInfoArray;
-        }
-        finally
-        {
-            if (jedis != null)
-            {
-                jedis.close();
-            }
-        }
     }
 
     @Override
@@ -664,15 +603,5 @@ public class RedisDataDao implements DataDao
                 jedis.close();
             }
         }
-    }
-
-    /**
-     * Return the single instance of this Contacts.
-     *
-     * @return The Contacts instance.
-     */
-    public static RedisDataDao getInstance()
-    {
-        return theInstance;
     }
 }

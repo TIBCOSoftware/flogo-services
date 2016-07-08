@@ -12,35 +12,33 @@ import java.util.Set;
  */
 public interface DataDao
 {
-    Map<String, String> getSnapshot(String processID, int version);
+    Map<String, String> getSnapshot(String flowID, int version);
 
-    long saveSnapshot(String processID, Integer id, Integer status, Integer state, Object snapshotObject);
+    long saveSnapshot(String flowID, Integer id, Integer status, Integer state, Object snapshotObject);
 
-    long removeSnapshot(String processID);
+    long removeSnapshot(String flowID);
 
     Set<String> listSnapshots();
 
     List<Map<String, String>> getInstancesMetadata();
 
-    Map<String, String> getSnapshotMetadata(String processID);
+    Map<String, String> getSnapshotMetadata(String flowID);
 
-    Map<String, String> getSnapshotStatus(String processID);
+    Map<String, String> getSnapshotStatus(String flowID);
 
-    Map<String, String> getInstanceStatus(String processID);
+    Map<String, String> getInstanceStatus(String flowID);
 
-    Map<String, Object> listSteps(String processID, boolean withStatus);
+    Map<String, Object> listSteps(String flowID, boolean withStatus);
 
     List<Map<String, String>> listSteps();
 
     long saveStep(StepInfo stepInfo);
 
-    long saveStep(String processID, Integer id, Integer state, Integer status, Object changeInfo);
+    long saveStep(String flowID, Integer id, Integer state, Integer status, Object changeInfo);
 
-    long removeStep(String processID);
+    long removeStep(String flowID);
 
-    Map<String, String> getStepMetadata(String processID);
+    Map<String, String> getStepMetadata(String flowID);
 
-    List<StepInfo> getStepInfo(String processID);
-
-    String getSnapshotStep(String processID, String id);
+    String getSnapshotStep(String flowID, String id);
 }

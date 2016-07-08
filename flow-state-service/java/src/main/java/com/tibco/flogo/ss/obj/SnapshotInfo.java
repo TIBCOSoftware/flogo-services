@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public class SnapshotInfo
 {
-    public static final String PROCESS_ID       = "processID";
+    public static final String FLOW_ID       = "flowID";
     public static final String ID       = "id";
     public static final String STATUS   = "status";
     public static final String STATE    = "state";

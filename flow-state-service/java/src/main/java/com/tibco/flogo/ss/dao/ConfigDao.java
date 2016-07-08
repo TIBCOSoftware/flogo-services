@@ -5,5 +5,5 @@ package com.tibco.flogo.ss.dao;
  */
 public interface ConfigDao
 {
-    boolean init();
+    void init();
 }
