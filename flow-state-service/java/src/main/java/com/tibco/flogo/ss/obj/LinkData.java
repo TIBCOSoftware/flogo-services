@@ -3,10 +3,10 @@ package com.tibco.flogo.ss.obj;
 /**
  * Created by mregiste on 3/3/2016.
  */
-public class Link {
+public class LinkData {
     private Integer state;
     private Object attrs;
-    private Integer linkID;
+    private Integer linkId;
 
     /**
      *
@@ -47,19 +47,34 @@ public class Link {
     /**
      *
      * @return
-     * The linkID
+     * The linkId
      */
-    public Integer getLinkID() {
-        return linkID;
+    public Integer getLinkId() {
+        return linkId;
     }
 
     /**
      *
-     * @param linkID
-     * The linkID
+     * @param linkId
+     * The linkId
      */
-    public void setLinkID(Integer linkID) {
-        this.linkID = linkID;
+    public void setLinkId(Integer linkId) {
+        this.linkId = linkId;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LinkData linkData = (LinkData) o;
+
+        return linkId.equals(linkData.linkId);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return linkId.hashCode();
+    }
 }

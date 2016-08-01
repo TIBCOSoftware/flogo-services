@@ -1,6 +1,9 @@
 package com.tibco.flogo.ss.obj;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -111,5 +114,17 @@ public class Snapshot {
                        ", status=" + status +
                        ", snapshotData=" + snapshotData +
                        '}';
+    }
+
+    public String toJson()
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        try
+        {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
+        }
+        catch (IOException e) {
+        }
+        return null;
     }
 }

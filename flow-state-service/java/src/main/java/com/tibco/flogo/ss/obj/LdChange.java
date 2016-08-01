@@ -11,25 +11,25 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class TdChange
+public class LdChange
 {
-    private static final Logger LOG = LoggerFactory.getLogger(TdChange.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(LdChange.class.getName());
     @JsonProperty("ChgType")
     private Integer chgType;
     @JsonProperty("ID")
     private Integer  id;
-    @JsonProperty("TaskData")
-    private TaskData taskData;
+    @JsonProperty("LinkData")
+    private LinkData linkData;
 
-    public TdChange()
+    public LdChange()
     {
     }
 
-    public TdChange(Integer chgType, Integer id, com.tibco.flogo.ss.obj.TaskData taskData)
+    public LdChange(Integer chgType, Integer id, LinkData linkData)
     {
         this.chgType = chgType;
         this.id = id;
-        this.taskData = taskData;
+        this.linkData = linkData;
     }
 
     /**
@@ -65,27 +65,27 @@ public class TdChange
     }
 
     /**
-     * @return The taskData
+     * @return The linkData
      */
-    public TaskData getTaskData()
+    public LinkData getLinkData()
     {
-        return taskData;
+        return linkData;
     }
 
     /**
-     * @param TaskData The taskData
+     * @param linkData The linkData
      */
-    public void setTaskData(TaskData TaskData)
+    public void setLinkData(LinkData linkData)
     {
-        this.taskData = TaskData;
+        this.linkData = linkData;
     }
 
     @Override
     public String toString() {
-        return "TdChange{" +
+        return "LdChange{" +
                        "chgType=" + chgType +
                        ", Id=" + id +
-                       ", taskData=" + taskData +
+                       ", linkData=" + linkData +
                        '}';
     }
 

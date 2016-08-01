@@ -18,37 +18,27 @@ import java.util.Set;
 /**
  * Created by mregiste on 2/10/2016.
  */
-@Path("/instances")
+@Path("/snapshots")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class InstanceResource
+public class SnapshotResource
 {
-    private static final Logger LOG = Logger.getLogger(InstanceResource.class);
+    private static final Logger LOG = Logger.getLogger(SnapshotResource.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Retrieves snapshot
+     * @param id - <flowid>:<ssid>
+     * @return
+     */
     @GET()
-    @Path("{flowID}/status")
-    public Map<String, String> getSnapshotStatus(@PathParam("flowID") String flowID)
+    @Path("{id}")
+    public Map<String, String> getSnapshotStep(@PathParam("id") String id)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().getFlowStatus(flowID);
-        }
-        catch (Exception ex)
-        {
-            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return snapshot MetaData: "
-                                                                                     + ex.getMessage());
-        }
-    }
-
-    @GET()
-    @Path("{flowID}/snapshot/{id}")
-    public String getSnapshotStep(@PathParam("flowID") String flowID, @PathParam("id") String id)
-    {
-        try
-        {
-            return ConfigDaoImpl.getInstance().getSnapshot(flowID, id);
+            return ConfigDaoImpl.getInstance().getSnapshot(id);
         }
         catch (Exception ex)
         {
@@ -57,9 +47,15 @@ public class InstanceResource
         }
     }
 
+
+    /**
+     * Retrieves metadata for snapshot
+     * @param id - id - <flowid>:<ssid>
+     * @return
+     */
     @GET()
-    @Path("{flowID}/metadata")
-    public Map<String,String> flowMetaData(@PathParam("flowID") String id)
+    @Path("{id}/metadata")
+    public Map<String,String> flowMetaData(@PathParam("id") String id)
     {
         try
         {
@@ -73,7 +69,6 @@ public class InstanceResource
     }
 
     @GET()
-    @Path("snapshots")
     public List<Map<String,String>> listSnapshots()
     {
         try
@@ -96,41 +91,6 @@ public class InstanceResource
         }
     }
 
-    @GET()
-    public List<Map<String, String>> listInstanceStatuses()
-    {
-        try
-        {
-            return ConfigDaoImpl.getInstance().getFlowsMetadata();
-        }
-        catch (Exception ex)
-        {
-            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return snapshot list: "
-                                                                             + ex.getMessage());
-        }
-    }
-
-    @POST
-    @Path("steps")
-    public void postChange(@Valid Map<String, Object> changeInfo)
-    {
-        long ret;
-        try
-        {
-            ret = ConfigDaoImpl.getInstance().saveStep((String)changeInfo.get("flowID"), (Integer)changeInfo.get("id"),
-                    (Integer)changeInfo.get("state"), (Integer)changeInfo.get("status"), changeInfo.get("stepData"));
-        }
-        catch (Exception ex)
-        {
-            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR,
-                                             "Save for stepData: " + changeInfo.get("id") + " failed: "
-                                                     + ex.getMessage());
-        }
-
-        if (ret == 0)
-            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR,
-                                             "Save for stepData: " + changeInfo.get("id") + " failed");
-    }
 
     @POST
     @Path("snapshot")

@@ -1,19 +1,28 @@
 package com.tibco.flogo.ss.obj;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by mregiste on 3/3/2016.
  */
 public class SnapshotData {
+    public static final String WORK_QUEUE = "workQueue";
+    public static final String ROOT_TASK_ENV = "rootTaskEnv";
+    public static final String ATTRS = "attrs";
+
     private String id;
     private Integer status;
     private Integer state;
-    private List<Attribute> attrs = new ArrayList<Attribute>();
-    private String flowURI;
-    private List<WorkQueue> workQueue = new ArrayList<WorkQueue>();
-    private RootTask rootTask;
+    private Set<Attribute> attrs = new HashSet<>();
+    private String flowUri;
+    private Set<WorkItem> workQueue = new HashSet<>();
+    private RootTaskEnv rootTaskEnv = new RootTaskEnv();
 
     /**
      *
@@ -74,7 +83,7 @@ public class SnapshotData {
      * @return
      * The attrs
      */
-    public List<Attribute> getAttrs() {
+    public Set<Attribute> getAttrs() {
         return attrs;
     }
 
@@ -83,26 +92,30 @@ public class SnapshotData {
      * @param attrs
      * The attrs
      */
-    public void setAttrs(List<Attribute> attrs) {
+    public void setAttrs(Set<Attribute> attrs) {
         this.attrs = attrs;
+    }
+
+    public void removeAttribute(Attribute attribute) {
+        attrs.remove(attribute);
     }
 
     /**
      *
      * @return
-     * The flowURI
+     * The flowUri
      */
-    public String getFlowURI() {
-        return flowURI;
+    public String getFlowUri() {
+        return flowUri;
     }
 
     /**
      *
-     * @param flowURI
+     * @param flowUri
      * The flowURI
      */
-    public void setFlowURI(String flowURI) {
-        this.flowURI = flowURI;
+    public void setFlowUri(String flowUri) {
+        this.flowUri = flowUri;
     }
 
     /**
@@ -110,7 +123,7 @@ public class SnapshotData {
      * @return
      * The workQueue
      */
-    public List<WorkQueue> getWorkQueue() {
+    public Set<WorkItem> getWorkQueue() {
         return workQueue;
     }
 
@@ -119,8 +132,17 @@ public class SnapshotData {
      * @param workQueue
      * The workQueue
      */
-    public void setWorkQueue(List<WorkQueue> workQueue) {
+    public void setWorkQueue(Set<WorkItem> workQueue) {
         this.workQueue = workQueue;
+    }
+
+    public void removeWorkItem(WorkItem workItem) {
+        for (WorkItem item : workQueue) {
+            if(item.getId().equals(workItem.getId()) && item.getExecType().equals(workItem.getExecType())
+                    && item.getCode().equals(workItem.getCode())) {
+                workQueue.remove(workItem);
+            }
+        }
     }
 
     /**
@@ -128,8 +150,8 @@ public class SnapshotData {
      * @return
      * The rootTaskEnv
      */
-    public RootTask getRootTaskEnv() {
-        return rootTask;
+    public RootTaskEnv getRootTaskEnv() {
+        return rootTaskEnv;
     }
 
     /**
@@ -137,8 +159,8 @@ public class SnapshotData {
      * @param rootTask
      * The rootTaskEnv
      */
-    public void setRootTaskEnv(RootTask rootTask) {
-        this.rootTask = rootTask;
+    public void setRootTaskEnv(RootTaskEnv rootTask) {
+        this.rootTaskEnv = rootTask;
     }
 
     @Override
@@ -148,9 +170,18 @@ public class SnapshotData {
                        ", status=" + status +
                        ", state=" + state +
                        ", attrs=" + attrs +
-                       ", flowURI='" + flowURI + '\'' +
+                       ", flowURI='" + flowUri + '\'' +
                        ", workQueue=" + workQueue +
-                       ", rootTask=" + rootTask +
+                       ", rootTaskEnv=" + rootTaskEnv +
                        '}';
+    }
+
+    public String toJson() {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
+        } catch (IOException e) {
+            return null;
+        }
     }
 }

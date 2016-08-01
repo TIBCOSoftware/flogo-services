@@ -4,6 +4,8 @@ package com.tibco.flogo.ss.obj;
  * Created by mregiste on 2/21/2016.
  */
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Map;
 
 public class WorkItem
@@ -11,6 +13,8 @@ public class WorkItem
     private Integer id;
     private Integer execType;
     private Integer code;
+    @JsonProperty("taskID")
+    private Integer taskId;
 
     public WorkItem()
     {
@@ -69,5 +73,13 @@ public class WorkItem
     public void setCode(Integer code)
     {
         this.code = code;
+    }
+
+    public Integer getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(Integer taskId) {
+        this.taskId = taskId;
     }
 }

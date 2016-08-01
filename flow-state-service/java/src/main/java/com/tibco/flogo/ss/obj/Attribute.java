@@ -1,12 +1,16 @@
 package com.tibco.flogo.ss.obj;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+
 /**
  * Created by mregiste on 3/3/2016.
  */
 public class Attribute {
     private String name;
     private String type;
-    private String value;
+    private Object value;
 
     /**
      * @return The name
@@ -39,15 +43,28 @@ public class Attribute {
     /**
      * @return The value
      */
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
     /**
      * @param value The value
      */
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
+    }
+
+    public String toJson()
+    {
+        ObjectMapper mapper = new ObjectMapper();
+        try
+        {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
+        }
+        catch (IOException e)
+        {
+            return null;
+        }
     }
 
     @Override

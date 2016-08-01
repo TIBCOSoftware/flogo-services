@@ -1,5 +1,7 @@
 package com.tibco.flogo.ss.obj;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -8,81 +10,88 @@ import java.io.IOException;
 /**
  * Created by mregiste on 2/20/2016.
  */
-public class SnapshotInfo
-{
-    public static final String FLOW_ID       = "flowID";
-    public static final String ID       = "id";
-    public static final String STATUS   = "status";
-    public static final String STATE    = "state";
+public class SnapshotInfo {
+    public static final String FLOW_ID = "flowID";
+    public static final String ID = "id";
+    public static final String STATUS = "status";
+    public static final String STATE = "state";
     public static final String SNAPSHOT_DATA = "snapshotData";
-    public static final String DATE     = "date";
+    public static final String DATE = "date";
 
-    String id;
-    String status;
-    String state;
-    String snapshot;
+    private Integer id = 0;
+    @JsonProperty("flowID")
+    private String flowId;
+    private Integer status;
+    private Integer state;
+    private SnapshotData snapshot;
+    private String date;
+    @JsonIgnore
+    public SnapshotData snapshotData;
 
-    public SnapshotInfo()
-    {
+    public SnapshotInfo() {
     }
 
-    public SnapshotInfo(String id, String status, String state, String snapshot)
-    {
+    public SnapshotInfo(String flowId, Integer id, Integer status, Integer state, SnapshotData snapshot) {
+        this.flowId = flowId;
         this.id = id;
         this.status = status;
         this.state = state;
         this.snapshot = snapshot;
     }
 
-    public String getId()
-    {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id)
-    {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public String getStatus()
-    {
+    public Integer getStatus() {
         return status;
     }
 
-    public void setStatus(String status)
-    {
+    public void setStatus(Integer status) {
         this.status = status;
     }
 
-    public String getState()
-    {
+    public Integer getState() {
         return state;
     }
 
-    public void setState(String state)
-    {
+    public void setState(Integer state) {
         this.state = state;
     }
 
-    public String getSnapshot()
-    {
+    public SnapshotData getSnapshot() {
         return snapshot;
     }
 
-    public void setSnapshot(String snapshot)
-    {
+    public String getFlowId() {
+        return flowId;
+    }
+
+    public void setFlowId(String flowId) {
+        this.flowId = flowId;
+    }
+
+    public void setSnapshot(SnapshotData snapshot) {
         this.snapshot = snapshot;
     }
 
-    public String toJson()
-    {
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String toJson() {
         ObjectMapper mapper = new ObjectMapper();
-        try
-        {
-            return mapper.writeValueAsString(this);
-        }
-        catch (IOException e)
-        {
+        try {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
+        } catch (IOException e) {
             return null;
         }
     }

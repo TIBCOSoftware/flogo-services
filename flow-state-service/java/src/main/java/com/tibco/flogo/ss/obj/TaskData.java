@@ -13,7 +13,7 @@ public class TaskData
     private Integer state;
     private Boolean done;
     private Object  attrs;
-    private Integer taskID;
+    private Integer taskId;
 
     public TaskData()
     {
@@ -24,7 +24,7 @@ public class TaskData
         this.state = state;
         this.done = done;
         this.attrs = attrs;
-        this.taskID = taskID;
+        this.taskId = taskId;
     }
 
     /**
@@ -78,17 +78,33 @@ public class TaskData
     /**
      * @return The taskId
      */
-    public Integer getTaskID()
+    public Integer getTaskId()
     {
-        return taskID;
+        return taskId;
     }
 
     /**
      * @param taskId The taskId
      */
-    public void setTaskID(Integer taskId)
+    public void setTaskId(Integer taskId)
     {
-        this.taskID = taskId;
+        this.taskId = taskId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TaskData taskData = (TaskData) o;
+
+        return taskId.equals(taskData.taskId);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return taskId.hashCode();
     }
 
     @Override
@@ -97,7 +113,7 @@ public class TaskData
                        "state=" + state +
                        ", done=" + done +
                        ", attrs=" + attrs +
-                       ", taskId=" + taskID +
+                       ", taskId=" + taskId +
                        '}';
     }
 }

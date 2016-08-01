@@ -1,8 +1,8 @@
 package com.tibco.flogo.ss.resource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tibco.flogo.ss.dao.impl.ConfigDaoImpl;
 import com.tibco.flogo.ss.handlers.CustomException;
+import com.tibco.flogo.ss.util.RollUp;
 import org.apache.log4j.Logger;
 
 import javax.validation.Valid;
@@ -23,16 +23,36 @@ public class StepResource
 {
     private static final Logger LOG = Logger.getLogger(StepResource.class);
 
-
-    private final ObjectMapper mapper = new ObjectMapper();
-
+    /**
+     * Retrieves the roll up from the first step to the specified step
+     * @param id - <flowid>:<sid>
+     * @return
+     */
     @GET()
-    @Path("{id}")
-    public Map<String, Object> listChanges(@PathParam("id") String id)
+    @Path("{id}/rollup")
+    public Map<String, Object> listChangeMetaData(@PathParam("id") String id)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().listSteps(id, false);
+            return RollUp.rollUp(id);
+        }
+        catch (Exception ex)
+        {
+            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return step rollup: "
+                                                                             + ex.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves all steps to all flows
+     * @return
+     */
+    @GET()
+    public List<Map<String, String>> listAllStepData()
+    {
+        try
+        {
+            return ConfigDaoImpl.getInstance().listAllStepData();
         }
         catch (Exception ex)
         {
@@ -41,32 +61,59 @@ public class StepResource
         }
     }
 
+    /**
+     * Retrieves a step by id
+     * @param id - <flowid>:<sid>
+     * @return
+     */
     @GET()
-    @Path("{id}/metadata")
-    public Map<String, String> listChangeMetaData(@PathParam("id") String id)
+    @Path("{id}/stepdata")
+    public Map<String, String> listStepData(@PathParam("id") String id)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().getStepMetadata(id);
+            return ConfigDaoImpl.getInstance().listStepData(id);
         }
         catch (Exception ex)
         {
             throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return stepData list: "
-                                                                             + ex.getMessage());
+                    + ex.getMessage());
         }
     }
 
+    /**
+     * Retreives all steps to a flow
+     * @param id
+     * @return
+     */
     @GET()
-    public List<Map<String, String>> listChange()
+    @Path("flow/{flowid}/stepdata")
+    public List<Map<String, String>> listFlowStepData(@PathParam("flowid") String id)
     {
         try
         {
-            return ConfigDaoImpl.getInstance().listSteps();
+            return ConfigDaoImpl.getInstance().listFlowStepData(id);
         }
         catch (Exception ex)
         {
             throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return stepData list: "
-                                                                             + ex.getMessage());
+                    + ex.getMessage());
+        }
+    }
+
+
+    @GET()
+    @Path("{flowid}/stepids")
+    public List<String> listAllFlowStepIds(@PathParam("flowid") String flowid)
+    {
+        try
+        {
+            return ConfigDaoImpl.getInstance().listAllFlowStepIds(flowid);
+        }
+        catch (Exception ex)
+        {
+            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return step ids for flow: "
+                    + ex.getMessage());
         }
     }
 
@@ -92,21 +139,21 @@ public class StepResource
     }
 
     @DELETE()
-    @Path("{id}")
-    public void deleteFlow(@PathParam("id") String id)
+    @Path("{flowid}")
+    public void deleteSteps(@PathParam("flowid") String flowid)
     {
         long ret;
         try
         {
-            ret = ConfigDaoImpl.getInstance().removeStep(id);
+            ret = ConfigDaoImpl.getInstance().removeSteps(flowid);
         }
         catch (Exception ex)
         {
-            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Delete for stepData: " + id + " failed: "
+            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Delete for stepData: " + flowid + " failed: "
                                                                              + ex.getMessage());
         }
 
         if (ret == 0)
-            throw new CustomException(Response.Status.NOT_FOUND, "Change: " + id + " not found");
+            throw new CustomException(Response.Status.NOT_FOUND, "Step: " + flowid + " not found");
     }
 }

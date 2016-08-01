@@ -1,9 +1,7 @@
 package com.tibco.flogo.ss.service;
 
 import com.tibco.flogo.ss.dao.impl.ConfigDaoImpl;
-import com.tibco.flogo.ss.resource.StepResource;
-import com.tibco.flogo.ss.resource.PingResource;
-import com.tibco.flogo.ss.resource.InstanceResource;
+import com.tibco.flogo.ss.resource.*;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -31,7 +29,7 @@ public class FlogoServerService extends Application<FlogoServiceConfiguration>
     @Override
     public String getName()
     {
-        return "flogo-status-server";
+        return "flogo-state-service";
     }
 
     @Override
@@ -58,6 +56,8 @@ public class FlogoServerService extends Application<FlogoServiceConfiguration>
         // general services
         environment.jersey().register(new InstanceResource());
         environment.jersey().register(new StepResource());
+        environment.jersey().register(new SnapshotResource());
+        environment.jersey().register(new FlowResource());
 
         /*
          * Filters
