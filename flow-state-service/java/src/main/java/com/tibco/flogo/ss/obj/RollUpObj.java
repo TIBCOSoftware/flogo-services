@@ -69,6 +69,10 @@ public class RollUpObj {
         this.status = status;
     }
 
+    public void setSnapshotStatus(Integer status) {
+        snapshot.setStatus(status);
+    }
+
     public Integer getState() {
         return state;
     }
@@ -77,12 +81,24 @@ public class RollUpObj {
         this.state = state;
     }
 
+    public void setSnapshotState(Integer state) {
+        snapshot.setState(status);
+    }
+
     public String getFlowUri() {
         return flowUri;
     }
 
     public void setFlowUri(String flowUri) {
         this.flowUri = flowUri;
+    }
+
+    public void setSnapshotFlowId(String flowUri) {
+        snapshot.setId(flowUri);
+    }
+
+    public void setSnapshotFlowUri(String flowUri) {
+        snapshot.setFlowUri(flowUri);
     }
 
     public Set<Attribute> getAttrs() {

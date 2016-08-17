@@ -62,4 +62,7 @@ public interface DataDao
     List<String> listAllFlowSnapshotIds(String flowId);
 
     List<SnapshotInfo> getSnapshotInfo(String flowID);
+
+    // todo - mjr need to sort this out
+    Map<String, Object> listSteps(String flowID, boolean withStatus);
 }

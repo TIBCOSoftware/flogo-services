@@ -43,6 +43,21 @@ public class InstanceResource
     }
 
     @GET()
+    @Path("{flowID}")
+    public Map<String, Object> listSteps(@PathParam("flowID") String flowID)
+    {
+        try
+        {
+            return ConfigDaoImpl.getInstance().listSteps(flowID, true);
+        }
+        catch (Exception ex)
+        {
+            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return stepData list: "
+                    + ex.getMessage());
+        }
+    }
+
+    @GET()
     @Path("{flowID}/snapshot/{id}")
     public String getSnapshotStep(@PathParam("flowID") String flowID, @PathParam("id") String id)
     {
@@ -54,6 +69,21 @@ public class InstanceResource
         {
             throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return stepData list: "
                                                                                      + ex.getMessage());
+        }
+    }
+
+    @GET()
+    @Path("{flowID}/steps")
+    public Map<String, Object> getInstanceSteps(@PathParam("flowID") String flowID)
+    {
+        try
+        {
+            return ConfigDaoImpl.getInstance().listSteps(flowID, false);
+        }
+        catch (Exception ex)
+        {
+            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return snapshot MetaData: "
+                    + ex.getMessage());
         }
     }
 

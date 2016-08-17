@@ -2,9 +2,11 @@ package com.tibco.flogo.ss.change;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tibco.flogo.ss.dao.impl.ConfigDaoImpl;
 import com.tibco.flogo.ss.dao.impl.RedisDataDao;
 import com.tibco.flogo.ss.obj.*;
 import com.tibco.flogo.ss.service.PropertyClient;
+import com.tibco.flogo.ss.util.RollUp;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -97,7 +99,7 @@ public class TestSnapshot {
         }
 
         TestSnapshot testChange = new TestSnapshot();
-        testChange.testSnapshotData();
+//        testChange.testSnapshotData();
         testChange.testSnapshot();
     }
 }

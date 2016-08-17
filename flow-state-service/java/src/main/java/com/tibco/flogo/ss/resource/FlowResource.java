@@ -26,7 +26,7 @@ public class FlowResource
 
     @GET()
     @Path("{flowID}/status")
-    public Map<String, String> getSnapshotStatus(@PathParam("flowID") String flowID)
+    public Map<String, String> getFlowStatus(@PathParam("flowID") String flowID)
     {
         try
         {

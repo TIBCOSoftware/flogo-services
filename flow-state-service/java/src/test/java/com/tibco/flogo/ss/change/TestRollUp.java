@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mregiste on 7/19/2016.
@@ -68,7 +69,7 @@ public class TestRollUp {
         }
 
         TestRollUp testRollUp = new TestRollUp();
-        testRollUp.testRollUp("0414483e99633add49607bf2dbc63c01", 4);
+        testRollUp.testRollUp("8c5344c2bfd5e9c96c253e99beb07a75", 1);
 //        testRollUp.testRollUp("7af07346f8dc4d3a8af9e2228152e984", 5);
 //        testRollUp.testRollUp("7af07346f8dc4d3a8af9e2228152e984", 4);
 //        testRollUp.testRollUp("7af07346f8dc4d3a8af9e2228152e984", 3);

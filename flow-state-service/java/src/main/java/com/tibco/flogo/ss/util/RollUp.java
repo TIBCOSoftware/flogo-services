@@ -31,6 +31,10 @@ public class RollUp {
                     rollUpObj.setState(step.getState());
                     rollUpObj.setStatus(step.getStatus());
                     rollUpObj.setFlowUri(step.getFlowId());
+
+                    rollUpObj.setSnapshotState(step.getState());
+                    rollUpObj.setSnapshotStatus(step.getStatus());
+                    rollUpObj.setSnapshotFlowId(step.getFlowId());
                 }
 
                 addWorkItem(stepData, rollUpObj);

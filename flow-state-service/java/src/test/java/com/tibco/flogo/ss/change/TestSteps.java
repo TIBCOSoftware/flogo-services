@@ -39,7 +39,7 @@ public class TestSteps extends TestCase
     public void testListSteps()
     {
         ObjectMapper mapper = new ObjectMapper();
-        List<Map<String, String>> stepData = RedisDataDao.getInstance().listFlowStepData("7af07346f8dc4d3a8af9e2228152e984");
+        List<Map<String, String>> stepData = RedisDataDao.getInstance().listFlowStepData("2fe53580aa8b1143a14aede4c9937f69");
         for (Map<String, String> stringStringMap : stepData) {
             for (Map.Entry<String, String> stringStringEntry : stringStringMap.entrySet()) {
                 System.out.println("Entry: " +stringStringEntry);

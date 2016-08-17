@@ -10,9 +10,11 @@ The **Flogo State Service** is a service for managing the state of process flows
     GET     /instances/snapshots - Depreciated 
     POST    /instances/steps - Depreciated
     DELETE  /instances/{flowID} - Depreciated
+    GET     /instances/{flowID} - Depreciated
     GET     /instances/{flowID}/metadata - Depreciated
     GET     /instances/{flowID}/snapshot/{id} - Depreciated
     GET     /instances/{flowID}/status - Depreciated
+    GET     /instances/{flowID}/steps - Depreciated
     GET     /ping - Retrieves status of Service
     GET     /snapshots - Retreives all snapshots
     POST    /snapshots/snapshot - Saves snapshot for flow
@@ -26,6 +28,7 @@ The **Flogo State Service** is a service for managing the state of process flows
     DELETE  /steps/{flowid} - Deletes all step data for flow
     GET     /steps/{id}/rollup - Retreives rollup for flow
     GET     /steps/{id}/stepdata - Retreives step data for flow
+    GET     /steps/{id}/rollup/snapshot - Retreives the rollup data as a string for backwards compatibility
 
 The following are the REST API's along with sample output.
 
@@ -79,6 +82,20 @@ POST    /instances/steps (com.tibco.flogo.ss.resource.InstanceResource)
 DELETE  /instances/{flowID} (com.tibco.flogo.ss.resource.InstanceResource)
 	
 	Depreciated - replaced by "/flows/{flowID}"
+	
+GET  /instances/{flowID} (com.tibco.flogo.ss.resource.InstanceResource)
+	
+	Depreciated - replaced by "/steps/flows/{flowID}/stepdata"
+	The old call returned a Map<String, Object> and the new call returns List<Map<String, String>>
+	The old format was {"steps":[{},{}...]} the new format is {[{},{}...]} it is just an array of steps.
+	The only difference between this call and the next is this call returns status where the next doesn't.
+	The new call always returns status.
+	
+GET  /instances/{flowID}/steps (com.tibco.flogo.ss.resource.InstanceResource)
+	
+	Depreciated - replaced by "/steps/flows/{flowID}/stepdata"
+	The old call returned a Map<String, Object> and the new call returns List<Map<String, String>>
+	The old format was {"steps":[{},{}...]} the new format is {[{},{}...]} it is just an array of steps.
 	
 GET     /instances/{flowID}/metadata (com.tibco.flogo.ss.resource.InstanceResource)
 	
@@ -341,3 +358,48 @@ GET     /steps/{flowid}/stepids (com.tibco.flogo.ss.resource.StepResource)
 	"step:afb44dae489cf7c21ab33ba1eecea306:2", 
 	"step:afb44dae489cf7c21ab33ba1eecea306:3", 
 	"step:afb44dae489cf7c21ab33ba1eecea306:4"]
+	
+GET     /steps/{id}/rollup/snapshot
+    
+    http://localhost:9190/steps/2fe53580aa8b1143a14aede4c9937f69:4/rollup/snapshot
+    curl -X "GET" http://localhost:9190/steps/2fe53580aa8b1143a14aede4c9937f69:4/rollup/snapshot
+    
+    {
+      "id" : "2fe53580aa8b1143a14aede4c9937f69",
+      "status" : 500,
+      "state" : 500,
+      "attrs" : [ {
+        "name" : "{A2.message}",
+        "type" : "string",
+        "value" : "'Start logging...' - FlowInstanceID [2fe53580aa8b1143a14aede4c9937f69], Flow [My new shiny flow], Task [log start]"
+      }, {
+        "name" : "{A4.message}",
+        "type" : "string",
+        "value" : "'222 ux doggie' - FlowInstanceID [2fe53580aa8b1143a14aede4c9937f69], Flow [My new shiny flow], Task [log pet]"
+      }, {
+        "name" : "{A3.result}",
+        "type" : "object",
+        "value" : {
+          "category" : {
+            "id" : 0,
+            "name" : "string"
+          },
+          "id" : 222,
+          "name" : "222 ux doggie",
+          "photoUrls" : [ "string" ],
+          "status" : "available",
+          "tags" : [ {
+            "id" : 0,
+            "name" : "string"
+          } ]
+        }
+      } ],
+      "flowUri" : null,
+      "workQueue" : [ ],
+      "rootTaskEnv" : {
+        "id" : 1,
+        "taskId" : 1,
+        "taskDatas" : [ ],
+        "linkDatas" : [ ]
+      }
+    }

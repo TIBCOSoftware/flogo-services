@@ -745,6 +745,155 @@ public class RedisDataDao implements DataDao
         }
     }
 
+    // todo - mjr need to sort this out
+    @Override
+    public Map<String, Object> listSteps(String flowID, boolean withStatus)
+    {
+        Jedis jedis = null;
+        try
+        {
+            jedis = m_pool.getResource();
+            Integer taskId = null;
+            ArrayList attrs = null;
+            LinkedHashMap changesMap;
+            LinkedHashMap snapshotMap = null;
+            // get list of step entries
+            List<String> changes = jedis.lrange(STEPS_NAMESPACE + flowID, 0, -1);
+            if(changes == null || changes.isEmpty())
+                LOG.debug("Steps for instance: " +flowID +" not found");
+            Map<String, Object> results = new HashMap<String, Object>();
+            List steps = new ArrayList<Object>();
+            List tasks = new ArrayList<Object>();
+            Map<String, Object> taskMetadata = new HashMap<String, Object>();
+            Map<String, Object> flowMetatdata = new HashMap<String, Object>();
+            Map<String, Object> step = new HashMap<String, Object>();
+            for (String change : changes)
+            {
+                Map<String, String> changesJson = jedis.hgetAll(change);
+                if(changesJson == null)
+                    LOG.debug("Step: " +change +" not found");
+                String stepId = changesJson.get("id");
+                if(stepId == null)
+                    LOG.debug("ID not found in step: " +change);
+                ObjectMapper mapper = new ObjectMapper();
+                try
+                {
+                    changesMap =  mapper.readValue(changesJson.get("stepData"), LinkedHashMap.class);
+                    if(changesMap == null)
+                        LOG.debug("Object mapper failed to convert: " +change);
+                    ArrayList<LinkedHashMap> tdChanges = (ArrayList) changesMap.get("tdChanges");
+                    if(tdChanges != null) {
+                        for (LinkedHashMap tdChange : tdChanges) {
+                            taskId = (Integer) tdChange.get("ID");
+                            String jsonSnapshot = jedis.hget(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData");
+                            if (jsonSnapshot != null) {
+                                ObjectMapper snapshotMapper = new ObjectMapper();
+                                try {
+                                    snapshotMap = snapshotMapper.readValue(jsonSnapshot, LinkedHashMap.class);
+                                    if(snapshotMap == null)
+                                        LOG.debug("Object mapper failed to convert snapshot: " +SNAPSHOT_NAMESPACE + flowID + ":" + stepId);
+                                    LinkedHashMap rootTaskEnv = (LinkedHashMap) snapshotMap.get("rootTaskEnv");
+                                    ArrayList<LinkedHashMap> taskDatas = (ArrayList) rootTaskEnv.get("taskDatas");
+                                    if(taskDatas != null) {
+                                        for (LinkedHashMap taskData : taskDatas) {
+                                            LOG.debug("taskData :" + taskData.get("taskID") + " taskId: " + taskId);
+                                            if (taskData.get("taskID") == taskId) {
+                                                attrs = (ArrayList) taskData.get("attrs");
+                                                LOG.debug("Found task match!!!");
+                                                LOG.debug("taskID: " + taskData.get("taskID"));
+                                                LOG.debug("stepId: " + stepId);
+//                                            taskMetadata.put("id", stepId);
+                                                taskMetadata.put("taskId", taskData.get("taskID"));
+                                                taskMetadata.put("attributes", attrs);
+                                                if (attrs != null && !attrs.isEmpty())
+                                                    tasks.add(taskMetadata);
+                                                // clear
+                                                taskMetadata = new HashMap<String, Object>();
+                                            }
+                                        }
+                                    }
+                                    else
+                                        LOG.debug("Task datas not found for snapshot: " +SNAPSHOT_NAMESPACE + flowID + ":" + stepId);
+                                } catch (Exception e) {
+                                    LOG.debug("Exception in listSteps(snapshot)", e);
+                                }
+                            }
+                            else
+                                LOG.debug("Snapshot for instance step: " +flowID + ":" + stepId +" not found");
+                        }
+                    }
+
+                    // no tdChanges found
+                    if(snapshotMap == null) {
+                        String jsonSnapshot = jedis.hget(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData");
+                        if(jsonSnapshot != null) {
+                            ObjectMapper snapshotMapper = new ObjectMapper();
+                            snapshotMap = snapshotMapper.readValue(jsonSnapshot, LinkedHashMap.class);
+                        }
+                    }
+
+                    if(snapshotMap != null) {
+                        Integer tmpTaskId = null;
+                        Integer stepTaskId = null;
+                        ArrayList<LinkedHashMap> wqChanges = (ArrayList) changesMap.get("wqChanges");
+                        if(wqChanges != null) {
+                            for (LinkedHashMap wqChange : wqChanges) {
+                                tmpTaskId = (Integer) ((Map)wqChange.get("WorkItem")).get("taskID");
+                                Integer chgType = (Integer) wqChange.get("ChgType");
+                                if (chgType == 3 && tmpTaskId != 1) {
+                                    stepTaskId = tmpTaskId;
+                                    break;
+                                }
+                            }
+                            if(stepTaskId == null)
+                                stepTaskId = 1;
+                        }
+                        ArrayList flowAttrs = (ArrayList) snapshotMap.get("attrs");
+                        if(flowAttrs != null) {
+                            flowMetatdata.put("state", snapshotMap.get("state"));
+                            flowMetatdata.put("status", snapshotMap.get("status"));
+                            flowMetatdata.put("attributes", flowAttrs);
+                            step.put("flow", flowMetatdata);
+                        }
+                        step.put("taskId", stepTaskId);
+                        step.put("id", stepId);
+
+                        // clear
+                        flowMetatdata = new HashMap<String, Object>();
+                        step.put("tasks", tasks);
+                        // clear
+                        tasks = new ArrayList<Object>();
+                        steps.add(step);
+                        // clear
+                        step = new HashMap<String, Object>();
+                        snapshotMap = null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    LOG.debug("Exception in listSteps", e);
+                }
+            }
+
+            if(withStatus)
+            {
+                Map<String, String> flowStatus = ConfigDaoImpl.getInstance().getFlowStatus(flowID);
+                results.put("status", flowStatus.get("status"));
+            }
+
+            results.put("steps", steps);
+
+            return results;
+        }
+        finally
+        {
+            if (jedis != null)
+            {
+                jedis.close();
+            }
+        }
+    }
+
     // helpers
     private static final String DELETE_SCRIPT_IN_LUA = "local keys = redis.call('keys', '%s')" +
             "  for i,k in ipairs(keys) do" +

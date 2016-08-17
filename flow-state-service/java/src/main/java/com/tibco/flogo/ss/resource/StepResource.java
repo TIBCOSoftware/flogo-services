@@ -2,6 +2,8 @@ package com.tibco.flogo.ss.resource;
 
 import com.tibco.flogo.ss.dao.impl.ConfigDaoImpl;
 import com.tibco.flogo.ss.handlers.CustomException;
+import com.tibco.flogo.ss.obj.RollUpObj;
+import com.tibco.flogo.ss.obj.SnapshotData;
 import com.tibco.flogo.ss.util.RollUp;
 import org.apache.log4j.Logger;
 
@@ -11,6 +13,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
+
+import static com.tibco.flogo.ss.util.RollUp.rollUp;
 
 
 /**
@@ -30,16 +34,42 @@ public class StepResource
      */
     @GET()
     @Path("{id}/rollup")
-    public Map<String, Object> listChangeMetaData(@PathParam("id") String id)
+    public Map<String, Object> listRollUp(@PathParam("id") String id)
     {
         try
         {
-            return RollUp.rollUp(id);
+            return rollUp(id);
         }
         catch (Exception ex)
         {
             throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return step rollup: "
                                                                              + ex.getMessage());
+        }
+    }
+
+    @GET()
+    @Path("{id}/rollup/snapshot")
+    public String listRollUpMetaData(@PathParam("id") String id)
+    {
+        try
+        {
+            if(id != null && !id.isEmpty()) {
+                String[] tokens = id.split(":");
+                if(tokens.length != 2) {
+                    throw new IllegalArgumentException("Invalid id format: " +id +" should be <flowid>:<sid>");
+                }
+
+                RollUpObj rollUpObj = RollUp.rollUp(tokens[0], Integer.valueOf(tokens[1]));
+                SnapshotData snapshotData = rollUpObj.getSnapshot();
+                return snapshotData.toJson();
+            }
+
+            return "";
+        }
+        catch (Exception ex)
+        {
+            throw new CustomException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to return step rollup: "
+                    + ex.getMessage());
         }
     }
 
