@@ -1,0 +1,11 @@
+sudo: required
+services:
+  - docker
+script: ./scripts/release-build.sh
+after_success:
+  - if [ "${TRAVIS_BRANCH}" == "master" ]; then
+    docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
+    source ./scripts/init.sh ;
+    docker::copy_tag_and_push flogo/flow-service pdhar/flow-service;
+    docker::copy_tag_and_push flogo/state-service pdhar/state-service;
+    fi
