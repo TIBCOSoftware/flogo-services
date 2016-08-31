@@ -1,5 +1,5 @@
 FROM alpine:3.3
-MAINTAINER Aditya Wagle
+MAINTAINER TIBCO Software Inc.
 
 ADD flow-state* /tmp/flow-state-service/
 
@@ -9,7 +9,8 @@ EXPOSE 9190 9191
 
 RUN chmod 777 /tmp/flow-state-service/docker-start.sh && \
     apk --no-cache --update add openjdk8 bash libstdc++ && \
-    rm -rf /var/cache/apk/*
+    rm -rf /var/cache/apk/* && \
+    /tmp/flow-state-service/docker-start.sh compile
     
 WORKDIR /tmp/flow-state-service/build/install/state-service/bin/
     

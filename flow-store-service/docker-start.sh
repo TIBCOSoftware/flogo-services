@@ -47,11 +47,18 @@ echo "Executing Script to start server"
 
 echo "CLI OPTION IS $1"
 
-if [ "$1" == compile ]; then
+if [ "$1" == "compile" ]; then
         t_compile
+elif [ "$1" == "compile_and_run" ]; then 
+        t_compile
+        t_main
+        trap t_destroy SIGTERM
+        wait $AGENT_PID
+else
+        t_main
+        trap t_destroy SIGTERM
+        wait $AGENT_PID
 fi
 
-t_main
 
-trap t_destroy SIGTERM
-wait $AGENT_PID
+

@@ -1,5 +1,5 @@
 FROM alpine:3.3
-MAINTAINER Aditya Wagle
+MAINTAINER TIBCO Softwware Inc.
 
 ADD flow-store-service /tmp/flow-service/
 
@@ -9,7 +9,8 @@ EXPOSE 9090 9091
 
 RUN chmod 777 /tmp/flow-service/docker-start.sh && \
     apk --no-cache --update add openjdk8 bash libstdc++ && \
-    rm -rf /var/cache/apk/*
+    rm -rf /var/cache/apk/* && \
+    /tmp/flow-service/docker-start.sh compile
     
 WORKDIR /tmp/flow-service
 
