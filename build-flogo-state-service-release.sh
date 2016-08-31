@@ -12,7 +12,7 @@ if [ -d "${SCRIPT_ROOT}/submodules/flogo-cicd" ]; then
   source ${SCRIPT_ROOT}/submodules/flogo-cicd/scripts/init.sh
   # Build flogo/state-service docker image
   pushd ${SCRIPT_ROOT}
-  # TODO: change to build_and_push() after 0.2.0
-  docker::build_file Dockerfile-flow-state-service flogo/state-service
+  cp ${SCRIPT_ROOT}/submodules/flogo-cicd/docker/state-service/Dockerfile ./Dockerfile-flow-state-service
+  docker::build_and_push flogo/state-service Dockerfile-flow-state-service 
   popd
 fi

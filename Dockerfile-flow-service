@@ -1,5 +1,5 @@
 FROM alpine:3.3
-MAINTAINER TIBCO Softwware Inc.
+MAINTAINER TIBCO Software Inc.
 
 ADD flow-store-service /tmp/flow-service/
 

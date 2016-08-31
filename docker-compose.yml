@@ -3,10 +3,7 @@ services:
     flogo-redis:
         image: redis
     flogo-flow-service:
-        image: flogo/flow-service
-        build: 
-            context: .
-            dockerfile: Dockerfile-flow-service
+        image: ${DOCKER_REGISTRY}flogo/flow-service:${BUILD_RELEASE_TAG}
         depends_on:
         - flogo-redis
         ports: 
@@ -22,10 +19,7 @@ services:
         environment: 
         - FLOGO_REDIS_HOST=flogo-redis
     flogo-state-service:
-        image: flogo/state-service
-        build: 
-            context: .
-            dockerfile: Dockerfile-flow-state-service
+        image: ${DOCKER_REGISTRY}flogo/state-service:${BUILD_RELEASE_TAG}
         depends_on:
         - flogo-redis
         ports: 
