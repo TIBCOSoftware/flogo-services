@@ -1,11 +1,41 @@
 sudo: required
 services:
   - docker
-script: ./scripts/release-build.sh
+cache:
+  bundler: false
+  directories:
+  - .build-cache          # images.txt
+# Handle git submodules yourself
+git:
+    submodules: false
+# Do a github login using token
+before_install:
+  - "echo -e \"machine github.com\n  login ${GITHUB_USER_TOKEN}\" >> ~/.netrc"
+
+script: 
+  - touch flogo-services.tgz
+  - tar cvfz flogo-services.tgz --exclude=flogo-services.tgz .
+  - find . -not -name "flogo-services.tgz" -not  -name "\." -not -name "\.\."  -print0 | xargs -0 rm -rf --
+  - "git ls-remote --exit-code https://github.com/TIBCOSoftware/flogo-cicd.git ${TRAVIS_BRANCH} ;
+    if [ $? -eq 0 ]; then 
+        echo \"Branch ${TRAVIS_BRANCH} found on flogo-cicd\" ;
+        git clone https://github.com/TIBCOSoftware/flogo-cicd.git --branch ${TRAVIS_BRANCH} --single-branch flogo-cicd ;
+    else 
+        echo \"Branch ${TRAVIS_BRANCH} not found on flogo-cicd using master\" ;
+        git clone https://github.com/TIBCOSoftware/flogo-cicd.git flogo-cicd ;
+    fi"
+  - pushd flogo-cicd/docker/flow-service
+  - ./build-flow-service.sh
+  - popd
+  - pushd flogo-cicd/docker/state-service
+  - ./build-state-service.sh
+  - popd
+after_script:
+  - "[ -f \"${HOME}/.netrc\" ] && rm -f ${HOME}/.netrc"
 after_success:
-  - if [ "${TRAVIS_BRANCH}" == "master" ]; then
-    docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}";
-    source ./scripts/init.sh ;
-    docker::copy_tag_and_push flogo/flow-service pdhar/flow-service;
-    docker::copy_tag_and_push flogo/state-service pdhar/state-service;
-    fi
+  - "if [ \"${TRAVIS_BRANCH}\" == \"master\" ]; then
+    docker login -u=\"${DOCKER_USERNAME}\" -p=\"${DOCKER_PASSWORD}\" ;
+    source ${TRAVIS_BUILD_DIR}/flogo-cicd/scripts/init.sh ;
+    flogo::module::postbuild flogo-services flow-service ;
+    flogo::module::postbuild flogo-services state-service ;
+    fi"
