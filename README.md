@@ -35,4 +35,4 @@ docker-compose rm -f
 This starts both services in a docker environment. A `redis` image is required and is pulled as part of docker-compose up.
 
 ## License
-License information goes here. This needs to be updated before we make this repository public.
+flogo-services is licensed under a BSD-type license. See TIBCO LICENSE.txt for license text.
