@@ -14,7 +14,6 @@ import (
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/cmd"
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/model"
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/flowerror"
-	"github.com/TIBCOSoftware/flogo-services/flow-state-service/stateerror"
 	"github.com/pkg/errors"
 )
 
@@ -220,7 +219,7 @@ func HandlerErrorResWithType(response http.ResponseWriter, code int, err error, 
 }
 
 func HandleInternalError(response http.ResponseWriter, err error) {
-	flowErorr := ConstructError(err, http.StatusInternalServerError, stateerror.InternalError)
+	flowErorr := ConstructError(err, http.StatusInternalServerError, flowerror.InternalError)
 	returnApi, _ := json.Marshal(flowErorr)
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusInternalServerError)
