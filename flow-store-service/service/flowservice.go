@@ -14,19 +14,22 @@ import (
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/cmd"
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/model"
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/flowerror"
+	"github.com/TIBCOSoftware/flogo-services/flow-state-service/stateerror"
+	"github.com/pkg/errors"
 )
 
-var ReditClient = redis.NewClient(&redis.Options{Addr: *cmd.RedisAddr, Password:"",})
+var ReditClient = redis.NewClient(&redis.Options{Addr: *cmd.RedisAddr, Password:"", })
 
 var flowId uint64 = 0
 var log = logging.MustGetLogger("service")
 
 func ListAllFlow(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	log.Info("List all flows")
+	log.Debug("List all flows")
 	sliceCommand := ReditClient.SInter("flows")
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		HandleInternalError(response, errors.New("List all flows error"))
+		log.Error("List all flow error :%v", err)
 		return
 	} else {
 
@@ -34,7 +37,8 @@ func ListAllFlow(response http.ResponseWriter, request *http.Request, _ httprout
 		for index, element := range vals {
 			metdata, err := getMetdata(element)
 			if err != nil {
-				HandlerErrorResponse(response, http.StatusInternalServerError, err)
+				HandleInternalError(response, errors.New("Get " + element + " metadata error"))
+				log.Error("Get " + element + " metadata error :%v", err)
 				return
 			} else {
 				flows[index] = metdata
@@ -50,12 +54,13 @@ func ListAllFlow(response http.ResponseWriter, request *http.Request, _ httprout
 
 func GetFlow(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id := params.ByName("id")
-	log.Info("Get flow " + id)
+	log.Debug("Get flow " + id)
 
 	sliceCommand := ReditClient.HGet("flow:" + id, "flow")
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		HandleInternalError(response, errors.New("Get flow " + id + " error"))
+		log.Error("Get flow " + id + " error :%v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -66,20 +71,21 @@ func GetFlow(response http.ResponseWriter, request *http.Request, params httprou
 
 func GetFlowMetadata(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id := params.ByName("id")
-	log.Info("Get flow " + id)
+	log.Debug("Get flow " + id)
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	result, err := getMetdata(id)
 	jsonFlow, _ := json.Marshal(result)
 	if err != nil {
-		HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		HandleInternalError(response, errors.New("Get flow " + id + " metadata error"))
+		log.Error("Get flow " + id + " metadata error :%v", err)
 		return
 	}
 	fmt.Fprintf(response, "%s", jsonFlow)
 }
 
 func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	log.Info("Running save flow.")
+	log.Debug("Running save flow.")
 	flowContent, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		HandlerErrorResponse(response, http.StatusInternalServerError, err)
@@ -90,7 +96,8 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 	unmarshalErr := json.Unmarshal(flowContent, flowInfo)
 
 	if unmarshalErr != nil {
-		HandlerErrorResponse(response, http.StatusInternalServerError, unmarshalErr)
+		HandleInternalError(response, errors.New("Unmarshal flow body error while save flow"))
+		log.Error("Unmarshal flow body error while save flow:%v", err)
 		return
 	}
 	var id = flowInfo.Id
@@ -98,32 +105,34 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 		id = strconv.FormatUint(incrementalFlowId(), 10)
 	}
 
-	log.Info("Id is:" , id)
+	log.Info("Id is:", id)
 	flowMap := make(map[string]string)
 	flowMap["creationDate"] = time.Now().String()
 	flowMap["id"] = id
 	flowMap["name"] = flowInfo.Name
 	flowMap["description"] = flowInfo.Description
-
 	flowMap["flow"] = flowInfo.Flow
 
 	flowCommand := ReditClient.HMSet("flow:" + id, flowMap);
 	vals, err := flowCommand.Result()
 	if err != nil {
-		HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		HandleInternalError(response, errors.New("Get flow from BD error, flow id: " + id))
+		log.Error("Get flow from BD error, flow id: " + id + " :%v", err)
 		return
 	} else {
 		log.Info(vals)
 		flowsCommand := ReditClient.SAdd("flows", id)
 		_, err := flowsCommand.Result()
 		if err != nil {
-			HandlerErrorResponse(response, http.StatusInternalServerError, err)
+			HandleInternalError(response, errors.New("Save flow" + id + " into DB error."))
+			log.Error("Save flow" + id + " into DB error :%v", err)
 			return
 		} else {
 			result, err := getMetdata(id)
 			jsonFlow, _ := json.Marshal(result)
 			if err != nil {
-				HandlerErrorResponse(response, http.StatusInternalServerError, err)
+				HandleInternalError(response, errors.New("Get flow " + id + " metadata error"))
+				log.Error("Get flow " + id + " metadata error :%v", err)
 				return
 			}
 			response.Header().Set("Content-Type", "application/json")
@@ -140,10 +149,10 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 
 	ReditClient.SRem("flows", id)
 	sliceCommand := ReditClient.Del("flows:" + id)
-
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		HandleInternalError(response, errors.New("Delete flow " + id + " error"))
+		log.Error("Delete flow " + id + " error :%v", err)
 		return
 	} else {
 		log.Info(vals)
@@ -154,7 +163,6 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 }
 
 func getMetdata(id string) (map[string]string, error) {
-
 	descCommand := ReditClient.HGet("flow:" + id, "description")
 	nameCommand := ReditClient.HGet("flow:" + id, "name");
 	createDateCommand := ReditClient.HGet("flow:" + id, "creationDate")
@@ -201,6 +209,22 @@ func ConstructError(err error, code int, errType string) flowerror.FlowError {
 		Type: errType,
 	}
 
+}
+
+func HandlerErrorResWithType(response http.ResponseWriter, code int, err error, errorType string) {
+	flowErorr := ConstructError(err, code, errorType)
+	returnApi, _ := json.Marshal(flowErorr)
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(code)
+	fmt.Fprintf(response, "%s", returnApi)
+}
+
+func HandleInternalError(response http.ResponseWriter, err error) {
+	flowErorr := ConstructError(err, http.StatusInternalServerError, stateerror.InternalError)
+	returnApi, _ := json.Marshal(flowErorr)
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(response, "%s", returnApi)
 }
 
 func nilOrEmpty(str string) bool {
