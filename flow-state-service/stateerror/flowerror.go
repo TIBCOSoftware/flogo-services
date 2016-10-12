@@ -5,3 +5,8 @@ type StateError struct {
 	Message string `json:"message"`
 	Type    string        `json:type`
 }
+
+
+const (
+	InternalError = "Internal DB Error"
+)

@@ -10,6 +10,7 @@ import (
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/service"
 
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/util"
+	"github.com/pkg/errors"
 )
 
 var log = logging.MustGetLogger("flow")
@@ -17,19 +18,21 @@ var log = logging.MustGetLogger("flow")
 func ListAllFlowStatus(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	log.Debug("List all flows status")
 	command := service.ReditClient.Keys("flow:*")
-	vals, err := command.Result()
+	flowResults, err := command.Result()
 	if err != nil {
-		util.HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		util.HandleInternalError(response, errors.New("Get flow from DB error"))
+		log.Errorf("Get all flow status error: %v", err)
 		return
 	} else {
 
-		results := make([]map[string]string, len(vals))
+		results := make([]map[string]string, len(flowResults))
 
-		for index, element := range vals {
+		for index, element := range flowResults {
 			result := service.ReditClient.HGetAll(element)
 			allResult, getallErr := result.Result();
 			if getallErr != nil {
-				util.HandlerErrorResponse(response, http.StatusInternalServerError, getallErr)
+				util.HandleInternalError(response, errors.New("Get flow " + element + "from DB error"))
+				log.Errorf("Get flow " + element + "from DB error: %v", err)
 				return
 			} else {
 				allResult["id"] = strings.Replace(element, "flow:", "", 1)
@@ -46,14 +49,11 @@ func ListAllFlowStatus(response http.ResponseWriter, request *http.Request, _ ht
 
 func GetFlowStatus(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	log.Info("Get flow status")
-
 	flowID := params.ByName("flowID")
-	//command := service.ReditClient.HGet("flow:" + flowID, "status")
-	//
-	//results, err := command.Result()
 	metadata, err := FlowStatus(flowID)
 	if err != nil {
-		util.HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		util.HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
+		log.Errorf("Get flow " + flowID + " status error: %v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -84,14 +84,16 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 	command := service.ReditClient.HKeys("flow:" + id)
 	vals, err := command.Result()
 	if err != nil {
-		util.HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		util.HandleInternalError(response, errors.New("Get keys error while delete flow " + id + " error"))
+		log.Errorf("Get keys error while delete flow " + id + " error: %v", err)
 		return
 	} else {
 		for _, element := range vals {
 			result := service.ReditClient.HDel("flow:" + id, element)
 			allResult, getallErr := result.Result();
 			if getallErr != nil {
-				util.HandlerErrorResponse(response, http.StatusInternalServerError, getallErr)
+				util.HandleInternalError(response, errors.New("Delete flow " + id + " error"))
+				log.Errorf("Delete flow " + id + " error: %v", err)
 				return
 			} else {
 				response.Header().Set("Content-Type", "application/json")

@@ -35,6 +35,22 @@ func HandlerErrorResponse(response http.ResponseWriter, code int, err error) {
 	fmt.Fprintf(response, "%s", returnApi)
 }
 
+func HandlerErrorResWithType(response http.ResponseWriter, code int, err error, errorType string) {
+	flowErorr := ConstructError(err, code, errorType)
+	returnApi, _ := json.Marshal(flowErorr)
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(code)
+	fmt.Fprintf(response, "%s", returnApi)
+}
+
+func HandleInternalError(response http.ResponseWriter, err error) {
+	flowErorr := ConstructError(err, http.StatusInternalServerError, stateerror.InternalError)
+	returnApi, _ := json.Marshal(flowErorr)
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(response, "%s", returnApi)
+}
+
 func ConstructError(err error, code int, errType string) stateerror.StateError {
 
 	return stateerror.StateError{
