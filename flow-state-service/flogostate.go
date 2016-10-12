@@ -1,6 +1,6 @@
 package main
 
-import(
+import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -12,8 +12,8 @@ import(
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/service/step"
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/cmd"
 	stateping "github.com/TIBCOSoftware/flogo-services/flow-state-service/service/ping"
-
 )
+
 var log = logging.MustGetLogger("main")
 
 func main() {
@@ -41,28 +41,27 @@ func main() {
 	stateRouter.POST("/instances", instance.PostChange)
 	stateRouter.DELETE("/instances/:flowID", instance.DeleteFLow)
 
+	//stateRouter.GET("/instances/snapshots", snapshot.ListSnapshots)
+	stateRouter.GET("/instances", snapshot.FlowMetadata)
 	//TODO change to another interface
-	//stateRouter.GET("/instance/snapshots", instance.ListSnapshots)
-	//stateRouter.POST("/instance/snapshot", instance.POSTSnapshot)
+	stateRouter.GET("/instance/instances", instance.ListSnapshots)
+	stateRouter.POST("/instances/snapshot", instance.POSTSnapshot)
 	//Ping
 	stateRouter.GET("/ping", stateping.Ping)
 
 	//Snapshot
 	//stateRouter.GET("/snapshots", instance.ListSnapshots)
-
-	stateRouter.POST("/snapshots", instance.POSTSnapshot)
+	stateRouter.GET("/snapshots", snapshot.ListSnapshots)
+	stateRouter.POST("/snapshots/snapshot", instance.POSTSnapshot)
 	stateRouter.GET("/snapshot/:id", snapshot.GetSnapshotStep)
 	stateRouter.GET("/snapshot/:id/metadata", snapshot.FlowMetadata)
-	stateRouter.GET("/snapshots", snapshot.ListSnapshots)
-	//stateRouter.POST("/snapshot/snapshot", snapshot.PostSnapshot)
 	stateRouter.DELETE("/snapshots/:flowID", snapshot.DeleteFlow)
 
 	//Step
-	//stateRouter.GET("/step/stepdata", step.ListStepData)
-	stateRouter.GET("/steps/:id", step.ListStepData)
 	stateRouter.GET("/steps/:id/rollup", step.ListRollup)
 	stateRouter.GET("/steps/:id/rollup/snapshot", step.ListRollupMetadata)
 	stateRouter.GET("/steps", step.ListAlllStepData)
+	stateRouter.GET("/steps/:id/metadata", step.ListStepData)
 	stateRouter.GET("/step/flow/:flowID/stepdata", step.ListFlowStepData)
 	stateRouter.GET("/step1/:flowid/stepids", step.ListAllFlowStepIds)
 
@@ -71,13 +70,13 @@ func main() {
 
 	if cmd.Port != nil && len(*cmd.Port) > 0 {
 		log.Info("Started server on localhost:" + *cmd.Port)
-		http.ListenAndServe(":"+*cmd.Port, &FlowServer{stateRouter})
+		http.ListenAndServe(":" + *cmd.Port, &FlowServer{stateRouter})
 	} else {
 		log.Info("Started server on localhost:9090")
 		http.ListenAndServe(":9090", &FlowServer{stateRouter})
 
-	}}
-
+	}
+}
 
 type FlowServer struct {
 	r *httprouter.Router
