@@ -8,7 +8,6 @@ import (
 	"errors"
 	"strings"
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/model"
-	"github.com/mitchellh/mapstructure"
 	"strconv"
 	"encoding/json"
 	"io/ioutil"
@@ -322,10 +321,9 @@ func RollUP(flowId string, stepId int64) model.RollUpObj {
 
 func getStepInfo(flowID string) ([]model.StepInfo, error) {
 	stepsID, err := ListallFlowStpids(flowID)
-
 	if err == nil {
-		if stepsID == nil || len(stepsID) <= 0 {
-			log.Debug("Steps for flow: " + flowID + " not found")
+		if len(stepsID) <= 0 {
+			log.Info("Steps for flow: " + flowID + " not found")
 		}
 
 		if len(stepsID) > 0 {
@@ -334,24 +332,45 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 			for _, stepId := range stepsID {
 				changeJsonCommand := service.ReditClient.HGetAll(stepId)
 				changeJson, err := changeJsonCommand.Result()
+				log.Info("Change json, %v", changeJson)
 				if err != nil {
+					log.Error(err)
 					return nil, err
 				}
 
 				if changeJson == nil {
-					log.Debug("Step: " + stepId + " not found")
+					log.Info("Step: " + stepId + " not found")
 				} else {
 					stepInfo := model.StepInfo{}
-					err := mapstructure.Decode(changeJson, stepInfo)
-					if err != nil {
-						return nil, err
+					id, idErr := strconv.ParseInt(changeJson["id"], 10, 64)
+					if idErr != nil {
+						return nil, idErr
+					} else {
+						stepInfo.ID = id
+					}
+					stepInfo.Date = changeJson["date"]
+					stepInfo.FlowID = changeJson["flowID"]
+					state, stateErr := strconv.ParseInt(changeJson["state"], 10, 64)
+					if stateErr != nil {
+						return nil, stateErr
+					} else {
+						stepInfo.State = state
+					}
+					status, statusErr := strconv.ParseInt(changeJson["status"], 10, 64)
+					if statusErr != nil {
+						return nil, statusErr
+					} else {
+						stepInfo.Status = status
 					}
 
 					stepData := model.StepData{}
-					dataErr := mapstructure.Decode(changeJson["stepData"], stepData)
-					if dataErr != nil {
-						return nil, dataErr
+					stepDataStr := changeJson["stepData"]
+					err := json.Unmarshal([]byte(stepDataStr), &stepData)
+					if err != nil {
+						log.Error(err)
+						return nil, err
 					}
+
 					stepInfo.StepData = stepData
 
 					result := append(stepInfoLists, stepInfo)
@@ -363,7 +382,10 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 			return stepInfoLists, nil;
 		}
 
+	} else {
+		log.Error(err)
 	}
+
 
 	return []model.StepInfo{}, err
 
