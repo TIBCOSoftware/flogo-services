@@ -10,7 +10,7 @@ import (
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/service"
 
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/util"
-	"github.com/pkg/errors"
+	"errors"
 )
 
 var log = logging.MustGetLogger("flow")
