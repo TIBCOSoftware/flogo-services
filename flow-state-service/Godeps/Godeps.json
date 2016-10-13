@@ -9,10 +9,6 @@
 			"Rev": "d8ff598a019f2c7bad0980917a588193cf26666e"
 		},
 		{
-			"ImportPath": "github.com/mitchellh/mapstructure",
-			"Rev": "a6ef2f080c66d0a2e94e97cf74f80f772855da63"
-		},
-		{
 			"ImportPath": "github.com/op/go-logging",
 			"Comment": "v1-7-g970db52",
 			"Rev": "970db520ece77730c7e4724c61121037378659d9"
