@@ -14,7 +14,7 @@ import (
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/cmd"
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/model"
 	"github.com/TIBCOSoftware/flogo-services/flow-store-service/flowerror"
-	"github.com/pkg/errors"
+	"errors"
 )
 
 var ReditClient = redis.NewClient(&redis.Options{Addr: *cmd.RedisAddr, Password:"", })
