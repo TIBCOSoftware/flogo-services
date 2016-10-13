@@ -178,8 +178,9 @@ func PostChange(response http.ResponseWriter, request *http.Request, params http
 
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
-		util.HandleInternalError(response, errors.New("Unmarshal post body error"))
-		log.Errorf("Unmarshal post body error %v", err)
+		util.HandleInternalError(response, errors.New("Unmarshal steps post body error"))
+		log.Debugf("Steps content: ", string(content))
+		log.Errorf("Unmarshal steps post body error %v", err)
 		return
 	}
 

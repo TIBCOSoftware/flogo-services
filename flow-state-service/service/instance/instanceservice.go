@@ -365,8 +365,10 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	contentMap := map[string]string{}
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
-		util.HandleInternalError(response, errors.New("Unmarshal post body error"))
-		log.Errorf("Unmarshal post body error %v", err)
+
+		util.HandleInternalError(response, errors.New("Unmarshal step post body error"))
+		log.Debugf("Step content: ", string(content))
+		log.Errorf("Unmarshal step post body error %v", err)
 		return
 	}
 
@@ -419,8 +421,9 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
-		util.HandleInternalError(response, errors.New("Unmarshal post body error"))
-		log.Errorf("Unmarshal post body error %v", err)
+		util.HandleInternalError(response, errors.New("Unmarshal snapshot post body error"))
+		log.Debugf("Snapshot content: ", string(content))
+		log.Errorf("Unmarshal snapshot post body error %v", err)
 		return
 	}
 

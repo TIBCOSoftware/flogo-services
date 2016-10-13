@@ -64,6 +64,7 @@ func GetFlowStatus(response http.ResponseWriter, request *http.Request, params h
 }
 
 func FlowStatus(flowID string) (map[string]string, error) {
+	log.Debugf("=======,%v", service.ReditClient)
 	command := service.ReditClient.HGet("flow:" + flowID, "status")
 	vals, err := command.Result()
 	if err != nil {
