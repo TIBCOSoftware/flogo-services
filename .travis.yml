@@ -11,6 +11,7 @@ git:
 # Do a github login using token
 before_install:
   - "echo -e \"machine github.com\n  login ${GITHUB_USER_TOKEN}\" >> ~/.netrc"
+  - "docker login -u=\"${DOCKER_USERNAME}\" -p=\"${DOCKER_PASSWORD}\""
 
 script: 
   - touch flogo-services.tgz
@@ -34,7 +35,6 @@ after_script:
   - "[ -f \"${HOME}/.netrc\" ] && rm -f ${HOME}/.netrc"
 after_success:
   - "if [ \"${TRAVIS_BRANCH}\" == \"master\" ]; then
-    docker login -u=\"${DOCKER_USERNAME}\" -p=\"${DOCKER_PASSWORD}\" ;
     source ${TRAVIS_BUILD_DIR}/flogo-cicd/scripts/init.sh ;
     flogo::module::postbuild flogo-services flow-service ;
     flogo::module::postbuild flogo-services state-service ;
