@@ -46,6 +46,7 @@ func main() {
 	//TODO change to another interface
 	stateRouter.GET("/instance/instances", instance.ListSnapshots)
 	stateRouter.POST("/instances/snapshot", instance.POSTSnapshot)
+	stateRouter.POST("/instances/steps", instance.PostChange)
 	//Ping
 	stateRouter.GET("/ping", stateping.Ping)
 

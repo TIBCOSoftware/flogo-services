@@ -14,6 +14,7 @@ import (
 	"time"
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/util"
 	"errors"
+	"strconv"
 )
 
 var log = logging.MustGetLogger("instance")
@@ -264,6 +265,7 @@ func FlowMetadata(response http.ResponseWriter, request *http.Request, params ht
 	jsonFlow, _ := json.Marshal(metadata)
 	fmt.Fprintf(response, "%s", jsonFlow)
 
+
 }
 
 func GetSnapshotMetdata(flowID string) (map[string]string, error) {
@@ -338,7 +340,7 @@ func ListInstanceStatus(response http.ResponseWriter, request *http.Request, _ h
 			allResult, getallErr := result.Result()
 			if getallErr != nil {
 				util.HandleInternalError(response, errors.New("Get flow key data error"))
-				log.Errorf("Get flow key data error: %v", err)
+				log.Errorf("Get flow key data error: %v", getallErr)
 				return
 			} else {
 				allResult["id"] = strings.Replace(element, "flow:", "", 1)
@@ -362,35 +364,36 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 		return
 	}
 
-	contentMap := map[string]string{}
+	contentMap := model.StepInfo{}
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
-
 		util.HandleInternalError(response, errors.New("Unmarshal step post body error"))
 		log.Debugf("Step content: ", string(content))
-		log.Errorf("Unmarshal step post body error %v", err)
+		log.Errorf("Unmarshal step post body error %v", jsonerr)
 		return
 	}
 
-	flowID := contentMap["flowID"]
-	id := contentMap["id"]
-	state := contentMap["state"]
-	status := contentMap["status"]
-	stepData := contentMap["stepData"]
-
 	change := make(map[string]string)
+	flowID := contentMap.FlowID
+	id := strconv.FormatInt(contentMap.ID, 10)
 	change["flowID"] = flowID
 	change["id"] = id
-	change["stepData"] = stepData
-	change["state"] = state
-	change["status"] = status
+	stepData, stepDataErr := json.Marshal(contentMap.StepData)
+	if (stepDataErr != nil) {
+		util.HandleInternalError(response, errors.New("Marshal step data error while save steps"))
+		log.Errorf("Marshal step data error while save steps: %v", stepDataErr)
+	} else {
+		change["stepData"] = string(stepData)
+	}
+	change["state"] = strconv.FormatInt(contentMap.State, 10)
+	change["status"] = strconv.FormatInt(contentMap.Status, 10)
 	change["date"] = time.Now().String()
 
 	key := STEP_NAMESPACE + flowID + ":" + id
 
 	//TODO error handling
 	statusMap := make(map[string]string)
-	statusMap["status"] = status
+	statusMap["status"] = strconv.FormatInt(contentMap.Status, 10)
 	service.ReditClient.HMSet(FLOW_NAMESPACE + flowID, statusMap)
 	service.ReditClient.SAdd(STEP_FLOWS_KEY, flowID + ":" + id)
 	service.ReditClient.HMSet(key, change)
@@ -416,37 +419,36 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 		log.Errorf("Read body error: %v", err)
 		return
 	}
-
-	contentMap := make(map[string]string)
-
+	log.Debugf("Snapshot content: ", string(content))
+	contentMap := model.Snapshot{}
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
 		util.HandleInternalError(response, errors.New("Unmarshal snapshot post body error"))
 		log.Debugf("Snapshot content: ", string(content))
-		log.Errorf("Unmarshal snapshot post body error %v", err)
+		log.Errorf("Unmarshal snapshot post body error %v", jsonerr)
 		return
 	}
 
-	flowID := contentMap["flowID"]
-	id := contentMap["id"]
-	state := contentMap["state"]
-	status := contentMap["status"]
-	snapshotData := contentMap["snapshotData"]
-
 	snapshot := make(map[string]string)
-	snapshot["flowID"] = flowID
-	snapshot["id"] = id
-	snapshot["snapshotData"] = snapshotData
-	snapshot["state"] = state
-	snapshot["status"] = status
+	snapshot["flowID"] = contentMap.FlowID
+	snapshot["id"] = strconv.FormatInt(contentMap.ID, 10)
+	v, snapErr := json.Marshal(contentMap.SnapshotData)
+	if (snapErr != nil) {
+		util.HandleInternalError(response, errors.New("Marshal step data error while save steps"))
+		log.Errorf("Marshal step data error while save steps: %v", snapErr)
+	} else {
+		snapshot["snapshotData"] = string(v)
+	}
+	snapshot["state"] = strconv.FormatInt(contentMap.State, 10)
+	snapshot["status"] = strconv.FormatInt(contentMap.Status, 10)
 	snapshot["date"] = time.Now().String()
 
-	key := SNAPSHOT_NAMESPACE + flowID + ":" + id
+	key := SNAPSHOT_NAMESPACE + contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10)
 
 	//TODO error handling
-	service.ReditClient.SAdd(SNAPSHOTS_FLOWS_KEY, flowID + ":" + id)
+	service.ReditClient.SAdd(SNAPSHOTS_FLOWS_KEY, contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10))
 	service.ReditClient.HMSet(key, snapshot)
-	pushCommand := service.ReditClient.RPush(SNAPSHOTS_NAMESPACE + flowID, key)
+	pushCommand := service.ReditClient.RPush(SNAPSHOTS_NAMESPACE + contentMap.FlowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Save snapshot changes error"))

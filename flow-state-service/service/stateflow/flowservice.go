@@ -32,7 +32,7 @@ func ListAllFlowStatus(response http.ResponseWriter, request *http.Request, _ ht
 			allResult, getallErr := result.Result();
 			if getallErr != nil {
 				util.HandleInternalError(response, errors.New("Get flow " + element + "from DB error"))
-				log.Errorf("Get flow " + element + "from DB error: %v", err)
+				log.Errorf("Get flow " + element + "from DB error: %v", getallErr)
 				return
 			} else {
 				allResult["id"] = strings.Replace(element, "flow:", "", 1)
@@ -64,7 +64,6 @@ func GetFlowStatus(response http.ResponseWriter, request *http.Request, params h
 }
 
 func FlowStatus(flowID string) (map[string]string, error) {
-	log.Debugf("=======,%v", service.ReditClient)
 	command := service.ReditClient.HGet("flow:" + flowID, "status")
 	vals, err := command.Result()
 	if err != nil {
@@ -78,10 +77,8 @@ func FlowStatus(flowID string) (map[string]string, error) {
 }
 
 func DeleteFlow(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-
 	log.Info("Delete flow..")
 	id := params.ByName("flowID")
-
 	command := service.ReditClient.HKeys("flow:" + id)
 	vals, err := command.Result()
 	if err != nil {
@@ -94,7 +91,7 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 			allResult, getallErr := result.Result();
 			if getallErr != nil {
 				util.HandleInternalError(response, errors.New("Delete flow " + id + " error"))
-				log.Errorf("Delete flow " + id + " error: %v", err)
+				log.Errorf("Delete flow " + id + " error: %v", getallErr)
 				return
 			} else {
 				response.Header().Set("Content-Type", "application/json")

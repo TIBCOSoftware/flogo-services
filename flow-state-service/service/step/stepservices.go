@@ -10,7 +10,6 @@ import (
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/model"
 	"strconv"
 	"encoding/json"
-	"io/ioutil"
 	"time"
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/service/instance"
 	"github.com/TIBCOSoftware/flogo-services/flow-state-service/util"
@@ -166,40 +165,41 @@ func ListAllFlowStepIds(response http.ResponseWriter, request *http.Request, par
 }
 
 func PostChange(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	log.Info("Post changes flow ")
-	content, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		util.HandleInternalError(response, errors.New("Read body error"))
-		log.Errorf("Read body error: %v", err)
-		return
-	}
-
-	contentMap := make(map[string]string)
-
-	jsonerr := json.Unmarshal(content, &contentMap)
-	if jsonerr != nil {
-		util.HandleInternalError(response, errors.New("Unmarshal steps post body error"))
-		log.Debugf("Steps content: ", string(content))
-		log.Errorf("Unmarshal steps post body error %v", err)
-		return
-	}
-
-	flowID := contentMap["flowID"]
-	id := contentMap["id"]
-	state := contentMap["state"]
-	status := contentMap["status"]
-	stepInfo := contentMap["stepData"]
-
-	val, err := SaveSteps(flowID, id, state, status, stepInfo)
-	if err != nil {
-		util.HandleInternalError(response, errors.New("Save steps error"))
-		log.Errorf("Save steps error: %v", err)
-		return
-	} else {
-		response.Header().Set("Content-Type", "application/json")
-		response.WriteHeader(http.StatusOK)
-		fmt.Fprintf(response, "%d", val)
-	}
+	instance.PostChange(response, request, params)
+	//log.Info("Post changes flow ")
+	//content, err := ioutil.ReadAll(request.Body)
+	//if err != nil {
+	//	util.HandleInternalError(response, errors.New("Read body error"))
+	//	log.Errorf("Read body error: %v", err)
+	//	return
+	//}
+	//
+	//contentMap := make(map[string]string)
+	//
+	//jsonerr := json.Unmarshal(content, &contentMap)
+	//if jsonerr != nil {
+	//	util.HandleInternalError(response, errors.New("Unmarshal steps post body error"))
+	//	log.Debugf("Steps content: ", string(content))
+	//	log.Errorf("Unmarshal steps post body error %v", jsonerr)
+	//	return
+	//}
+	//
+	//flowID := contentMap["flowID"]
+	//id := contentMap["id"]
+	//state := contentMap["state"]
+	//status := contentMap["status"]
+	//stepInfo := contentMap["stepData"]
+	//
+	//val, err := SaveSteps(flowID, id, state, status, stepInfo)
+	//if err != nil {
+	//	util.HandleInternalError(response, errors.New("Save steps error"))
+	//	log.Errorf("Save steps error: %v", err)
+	//	return
+	//} else {
+	//	response.Header().Set("Content-Type", "application/json")
+	//	response.WriteHeader(http.StatusOK)
+	//	fmt.Fprintf(response, "%d", val)
+	//}
 }
 
 func SaveSteps(flowID string, id string, state string, status string, stepInfo string) (int64, error) {
@@ -386,7 +386,6 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 	} else {
 		log.Error(err)
 	}
-
 
 	return []model.StepInfo{}, err
 
