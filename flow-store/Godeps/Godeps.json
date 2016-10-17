@@ -1,0 +1,56 @@
+{
+	"ImportPath": "github.com/TIBCOSoftware/flogo-services/flow-store",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/julienschmidt/httprouter",
+			"Comment": "v1.1-34-gd8ff598",
+			"Rev": "d8ff598a019f2c7bad0980917a588193cf26666e"
+		},
+		{
+			"ImportPath": "github.com/op/go-logging",
+			"Comment": "v1-7-g970db52",
+			"Rev": "970db520ece77730c7e4724c61121037378659d9"
+		},
+		{
+			"ImportPath": "gopkg.in/bsm/ratelimit.v1",
+			"Rev": "db14e161995a5177acef654cb0dd785e8ee8bc22"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4",
+			"Comment": "v4.2.1",
+			"Rev": "5a272d03b960a72c61e5025a7d6e8da5d8815442"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal",
+			"Comment": "v4.2.1",
+			"Rev": "5a272d03b960a72c61e5025a7d6e8da5d8815442"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/consistenthash",
+			"Comment": "v4.2.1",
+			"Rev": "5a272d03b960a72c61e5025a7d6e8da5d8815442"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/errors",
+			"Comment": "v4.2.1",
+			"Rev": "5a272d03b960a72c61e5025a7d6e8da5d8815442"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/hashtag",
+			"Comment": "v4.2.1",
+			"Rev": "5a272d03b960a72c61e5025a7d6e8da5d8815442"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/pool",
+			"Comment": "v4.2.1",
+			"Rev": "5a272d03b960a72c61e5025a7d6e8da5d8815442"
+		},
+		{
+			"ImportPath": "gopkg.in/redis.v4/internal/proto",
+			"Comment": "v4.2.1",
+			"Rev": "5a272d03b960a72c61e5025a7d6e8da5d8815442"
+		}
+	]
+}
