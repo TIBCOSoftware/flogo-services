@@ -346,9 +346,8 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 					id, idErr := strconv.ParseInt(changeJson["id"], 10, 64)
 					if idErr != nil {
 						return nil, idErr
-					} else {
-						stepInfo.ID = id
 					}
+					stepInfo.ID = id
 					stepInfo.Date = changeJson["date"]
 					stepInfo.FlowID = changeJson["flowID"]
 					state, stateErr := strconv.ParseInt(changeJson["state"], 10, 64)
