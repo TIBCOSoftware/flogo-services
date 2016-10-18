@@ -1,4 +1,4 @@
-package model
+package flowinstance
 
 type WorkItem struct {
 	ID       int64 `json:"id"`
@@ -12,4 +12,3 @@ type WorkQueue struct {
 	Code     int64 `json:"code"`
 	TaskId   int64 `json:"taskId"`
 }
-

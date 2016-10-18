@@ -1,11 +1,8 @@
-package instance
+package flowinstance
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/model"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/service"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/service/stateflow"
 	"github.com/julienschmidt/httprouter"
 	"github.com/op/go-logging"
 	"io/ioutil"
@@ -15,6 +12,7 @@ import (
 	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 	"errors"
 	"strconv"
+	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
 )
 
 var log = logging.MustGetLogger("instance")
@@ -26,16 +24,11 @@ var STEPS_NAMESPACE = "steps:"
 
 var STEP_FLOWS_KEY = "stepFlows"
 
-var SNAPSHOT_NAMESPACE = "snapshot:"
-
-var SNAPSHOTS_NAMESPACE = "snapshots:"
-
-var SNAPSHOTS_FLOWS_KEY = "snapshotFlows"
 
 func GetSnapshotStatus(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	flowID := params.ByName("flowID")
 	log.Debug("Get flow " + flowID + " status")
-	metadata, err := stateflow.FlowStatus(flowID)
+	metadata, err := FlowStatus(flowID)
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
 		log.Errorf("Get flow " + flowID + " status error: %v", err)
@@ -44,6 +37,7 @@ func GetSnapshotStatus(response http.ResponseWriter, request *http.Request, para
 		response.Header().Set("Content-Type", "application/json")
 		response.WriteHeader(http.StatusOK)
 		jsonFlow, _ := json.Marshal(metadata)
+		log.Info(string(jsonFlow))
 		fmt.Fprintf(response, "%s", jsonFlow)
 	}
 }
@@ -71,7 +65,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	step := map[string]interface{}{}
 
-	changesCommand := service.ReditClient.LRange(STEPS_NAMESPACE + flowID, 0, -1)
+	changesCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + flowID, 0, -1)
 	changes, err := changesCommand.Result()
 	if err != nil {
 		return nil, err
@@ -82,7 +76,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 	}
 
 	for _, change := range changes {
-		changesJsonCommand := service.ReditClient.HGetAll(change)
+		changesJsonCommand := persistence.ReditClient.HGetAll(change)
 		changesJson, err := changesJsonCommand.Result()
 		if err != nil {
 			return nil, err
@@ -104,17 +98,17 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 			log.Debug("No step data found")
 		}
 
-		stepDataObj := &model.StepData{}
+		stepDataObj := &StepData{}
 		steperr := json.Unmarshal([]byte(stepData), stepDataObj)
 		if steperr != nil {
 			return nil, steperr
 		}
 
 		tdchanges := stepDataObj.TdChanges
-		snapshotDataObj := model.SnapshotData{}
+		snapshotDataObj := SnapshotData{}
 		for _, tdchange := range tdchanges {
 			taskId := tdchange.ID
-			jsonSnapshot := service.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
+			jsonSnapshot := persistence.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
 			if jsonSnapshot != "" {
 				steperr := json.Unmarshal([]byte(jsonSnapshot), &snapshotDataObj)
 				if steperr != nil {
@@ -151,7 +145,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 		}
 
 		if snapshotDataObj.ID == "" {
-			jsonSnapshot := service.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
+			jsonSnapshot := persistence.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
 			if jsonSnapshot != "" {
 				steperr := json.Unmarshal([]byte(jsonSnapshot), &snapshotDataObj)
 				if steperr != nil {
@@ -195,12 +189,12 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 			steps = append(steps, step)
 			tasks = tasks[0:0]
 			step = make(map[string]interface{})
-			snapshotDataObj = (model.SnapshotData{})
+			snapshotDataObj = (SnapshotData{})
 		}
 	}
 
 	if withStatus {
-		metadata, err := stateflow.FlowStatus(flowID)
+		metadata, err := FlowStatus(flowID)
 		if err != nil {
 			return nil, err
 		}
@@ -219,13 +213,14 @@ func GetSnapshotStep(response http.ResponseWriter, request *http.Request, params
 
 	log.Info("get snapshot step,  flow:" + flowId + " Step id:" + stepId)
 
-	resultCommand := service.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowId + ":" + stepId, "snapshotData")
+	resultCommand := persistence.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowId + ":" + stepId, "snapshotData")
 	vals, err := resultCommand.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get flow " + flowId + " and step " + stepId + " snapshot data  error"))
 		log.Errorf("Get flow " + flowId + " and step " + stepId + " snapshot data  error: %v", err)
 		return
 	} else {
+		log.Info("===========", vals)
 		response.Header().Set("Content-Type", "application/json")
 		response.WriteHeader(http.StatusOK)
 		fmt.Fprintf(response, "%s", vals)
@@ -236,8 +231,8 @@ func GetInstanceSteps(response http.ResponseWriter, request *http.Request, param
 	flowId := params.ByName("flowID")
 	log.Info("Get instance steps, flow " + flowId)
 
-	service.ReditClient.SRem("flows", flowId)
-	sliceCommand := service.ReditClient.Del("flows:" + flowId)
+	persistence.ReditClient.SRem("flows", flowId)
+	sliceCommand := persistence.ReditClient.Del("flows:" + flowId)
 
 	vals, err := sliceCommand.Result()
 	if err != nil {
@@ -255,7 +250,7 @@ func FlowMetadata(response http.ResponseWriter, request *http.Request, params ht
 	flowID := params.ByName("flowID")
 	log.Info("Get snapshot metadata, flow id: " + flowID)
 
-	metadata, err := GetSnapshotMetdata(flowID)
+	metadata, err := persistence.GetSnapshotMetdata(flowID)
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get flow " + flowID + " snapshot metadata error"))
 		log.Errorf("Get flow " + flowID + " snapshot metadata error: %v", err)
@@ -267,38 +262,8 @@ func FlowMetadata(response http.ResponseWriter, request *http.Request, params ht
 
 }
 
-func GetSnapshotMetdata(flowID string) (map[string]string, error) {
-	statusComamnd := service.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "status")
-	stateComamnd := service.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "state")
-	dateCommand := service.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "date")
-	idComamnd := service.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "id")
-
-	metadata := make(map[string]string)
-	metadata["flowID"] = flowID
-	status, err := statusComamnd.Result()
-	if err == nil {
-		metadata["status"] = status
-	}
-
-	state, err := stateComamnd.Result()
-	if err == nil {
-		metadata["state"] = state
-	}
-
-	date, err := dateCommand.Result()
-	if err == nil {
-		metadata["date"] = date
-	}
-
-	id, err := idComamnd.Result()
-	if err == nil {
-		metadata["id"] = id
-	}
-	return metadata, err
-}
-
 func ListSnapshots(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	resultCommand := service.ReditClient.SInter(SNAPSHOTS_FLOWS_KEY)
+	resultCommand := persistence.ReditClient.SInter(SNAPSHOTS_FLOWS_KEY)
 	vals, err := resultCommand.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get snapshot keys error"))
@@ -308,7 +273,7 @@ func ListSnapshots(response http.ResponseWriter, request *http.Request, params h
 		results := make([]map[string]string, len(vals))
 
 		for index, name := range vals {
-			metadata, err := GetSnapshotMetdata(name)
+			metadata, err := persistence.GetSnapshotMetdata(name)
 			if err != nil {
 				util.HandleInternalError(response, errors.New("Get flow " + name + " snapshot metadata error"))
 				log.Errorf("Get flow " + name + " snapshot metadata error: %v", err)
@@ -324,7 +289,7 @@ func ListSnapshots(response http.ResponseWriter, request *http.Request, params h
 }
 
 func ListInstanceStatus(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	command := service.ReditClient.Keys("flow:*")
+	command := persistence.ReditClient.Keys("flow:*")
 	vals, err := command.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get flow keys error"))
@@ -335,7 +300,7 @@ func ListInstanceStatus(response http.ResponseWriter, request *http.Request, _ h
 		results := make([]map[string]string, len(vals))
 
 		for index, element := range vals {
-			result := service.ReditClient.HGetAll(element)
+			result := persistence.ReditClient.HGetAll(element)
 			allResult, getallErr := result.Result()
 			if getallErr != nil {
 				util.HandleInternalError(response, errors.New("Get flow key data error"))
@@ -363,7 +328,7 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 		return
 	}
 
-	contentMap := model.StepInfo{}
+	contentMap := StepInfo{}
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
 		util.HandleInternalError(response, errors.New("Unmarshal step post body error"))
@@ -393,10 +358,10 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	//TODO error handling
 	statusMap := make(map[string]string)
 	statusMap["status"] = strconv.FormatInt(contentMap.Status, 10)
-	service.ReditClient.HMSet(FLOW_NAMESPACE + flowID, statusMap)
-	service.ReditClient.SAdd(STEP_FLOWS_KEY, flowID + ":" + id)
-	service.ReditClient.HMSet(key, change)
-	pushCommand := service.ReditClient.RPush(STEPS_NAMESPACE + flowID, key)
+	persistence.ReditClient.HMSet(FLOW_NAMESPACE + flowID, statusMap)
+	persistence.ReditClient.SAdd(STEP_FLOWS_KEY, flowID + ":" + id)
+	persistence.ReditClient.HMSet(key, change)
+	pushCommand := persistence.ReditClient.RPush(STEPS_NAMESPACE + flowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Save changes error"))
@@ -419,7 +384,7 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 		return
 	}
 	log.Debugf("Snapshot content: ", string(content))
-	contentMap := model.Snapshot{}
+	contentMap := Snapshot{}
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
 		util.HandleInternalError(response, errors.New("Unmarshal snapshot post body error"))
@@ -445,16 +410,16 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 	key := SNAPSHOT_NAMESPACE + contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10)
 
 	//TODO error handling
-	service.ReditClient.SAdd(SNAPSHOTS_FLOWS_KEY, contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10))
-	service.ReditClient.HMSet(key, snapshot)
-	pushCommand := service.ReditClient.RPush(SNAPSHOTS_NAMESPACE + contentMap.FlowID, key)
+	persistence.ReditClient.SAdd(SNAPSHOTS_FLOWS_KEY, contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10))
+	persistence.ReditClient.HMSet(key, snapshot)
+	pushCommand := persistence.ReditClient.RPush(SNAPSHOTS_NAMESPACE + contentMap.FlowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Save snapshot changes error"))
 		log.Errorf("Save snapshot changes error: %v", err)
 		return
 	} else {
-		log.Info(vals)
+		log.Info("----------", vals)
 		response.Header().Set("Content-Type", "application/json")
 		response.WriteHeader(http.StatusOK)
 		fmt.Fprintf(response, "%d", vals)
@@ -466,7 +431,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 	log.Debug("Delete flow " + flowID)
 
 	//retrive snapshot names
-	snapshotsCommand := service.ReditClient.LRange(SNAPSHOTS_NAMESPACE + flowID, 0, -1)
+	snapshotsCommand := persistence.ReditClient.LRange(SNAPSHOTS_NAMESPACE + flowID, 0, -1)
 	snapshots, err := snapshotsCommand.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get snapshot names error"))
@@ -475,7 +440,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 	} else {
 
 		for _, snapshot := range snapshots {
-			keysCommand := service.ReditClient.HKeys(snapshot)
+			keysCommand := persistence.ReditClient.HKeys(snapshot)
 			keys, err := keysCommand.Result()
 			if err != nil {
 				util.HandleInternalError(response, errors.New("Get snapshot keys error"))
@@ -483,14 +448,14 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 				return
 			} else {
 				for _, key := range keys {
-					response := service.ReditClient.HDel(snapshot, key)
+					response := persistence.ReditClient.HDel(snapshot, key)
 					log.Debug("snapshot flow key: " + flowID + " response: ", response.Val())
 				}
 			}
 		}
 	}
 
-	remSnapShotRespComand := service.ReditClient.Del(SNAPSHOTS_NAMESPACE + flowID)
+	remSnapShotRespComand := persistence.ReditClient.Del(SNAPSHOTS_NAMESPACE + flowID)
 	log.Debug("snapshot: " + flowID + " response: ", remSnapShotRespComand.Val())
 	remSnapShotResp, err := remSnapShotRespComand.Result()
 	if err != nil {

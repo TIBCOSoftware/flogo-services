@@ -1,4 +1,4 @@
-package service
+package flow
 
 import (
 	"net/http"

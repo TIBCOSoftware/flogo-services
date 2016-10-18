@@ -1,25 +1,17 @@
-package step
+package flowinstance
 
 import (
-	"github.com/op/go-logging"
 	"net/http"
 	"github.com/julienschmidt/httprouter"
 	"fmt"
 	"errors"
 	"strings"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/model"
 	"strconv"
 	"encoding/json"
 	"time"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/service/instance"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/service"
+	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
 )
-
-var STEP_NAMESPACE = "step:"
-var STEPS_NAMESPACE = "steps:"
-var STEP_FLOWS_KEY = "stepFlows"
-var log = logging.MustGetLogger("snapshot")
 
 func ListRollup(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id := params.ByName("id")
@@ -66,7 +58,7 @@ func ListRollupMetadata(response http.ResponseWriter, request *http.Request, par
 }
 
 func ListAlllStepData(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	sliceCommand := service.ReditClient.SInter(STEP_FLOWS_KEY)
+	sliceCommand := persistence.ReditClient.SInter(STEP_FLOWS_KEY)
 
 	var results = []map[string]string{}
 
@@ -121,7 +113,7 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 		return
 	}
 
-	stepsComamnd := service.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
+	stepsComamnd := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
 	steps, err := stepsComamnd.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get steps " + id + " error"))
@@ -150,7 +142,7 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 func ListAllFlowStepIds(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id := params.ByName("flowid")
 	log.Debug("list all flow step id " + id)
-	sliceCommand := service.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
+	sliceCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		util.HandleInternalError(response, errors.New("Get steps " + id + " error"))
@@ -162,44 +154,6 @@ func ListAllFlowStepIds(response http.ResponseWriter, request *http.Request, par
 		jsonFlow, _ := json.Marshal(vals)
 		fmt.Fprintf(response, "%s", jsonFlow)
 	}
-}
-
-func PostChange(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	instance.PostChange(response, request, params)
-	//log.Info("Post changes flow ")
-	//content, err := ioutil.ReadAll(request.Body)
-	//if err != nil {
-	//	util.HandleInternalError(response, errors.New("Read body error"))
-	//	log.Errorf("Read body error: %v", err)
-	//	return
-	//}
-	//
-	//contentMap := make(map[string]string)
-	//
-	//jsonerr := json.Unmarshal(content, &contentMap)
-	//if jsonerr != nil {
-	//	util.HandleInternalError(response, errors.New("Unmarshal steps post body error"))
-	//	log.Debugf("Steps content: ", string(content))
-	//	log.Errorf("Unmarshal steps post body error %v", jsonerr)
-	//	return
-	//}
-	//
-	//flowID := contentMap["flowID"]
-	//id := contentMap["id"]
-	//state := contentMap["state"]
-	//status := contentMap["status"]
-	//stepInfo := contentMap["stepData"]
-	//
-	//val, err := SaveSteps(flowID, id, state, status, stepInfo)
-	//if err != nil {
-	//	util.HandleInternalError(response, errors.New("Save steps error"))
-	//	log.Errorf("Save steps error: %v", err)
-	//	return
-	//} else {
-	//	response.Header().Set("Content-Type", "application/json")
-	//	response.WriteHeader(http.StatusOK)
-	//	fmt.Fprintf(response, "%d", val)
-	//}
 }
 
 func SaveSteps(flowID string, id string, state string, status string, stepInfo string) (int64, error) {
@@ -217,12 +171,12 @@ func SaveSteps(flowID string, id string, state string, status string, stepInfo s
 	statusMap := make(map[string]string)
 	statusMap["status"] = status
 
-	service.ReditClient.HMSet(instance.FLOW_NAMESPACE + flowID, statusMap)
+	persistence.ReditClient.HMSet(FLOW_NAMESPACE + flowID, statusMap)
 
-	service.ReditClient.SAdd("stepFlows", flowID + ":" + id)
-	service.ReditClient.HMSet(key, changes)
+	persistence.ReditClient.SAdd("stepFlows", flowID + ":" + id)
+	persistence.ReditClient.HMSet(key, changes)
 
-	pushCommand := service.ReditClient.RPush(STEPS_NAMESPACE + flowID, key)
+	pushCommand := persistence.ReditClient.RPush(STEPS_NAMESPACE + flowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		return 0, err
@@ -235,7 +189,7 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 	id := params.ByName("flowid")
 	log.Info("Delete steps " + id)
 
-	stepsCommand := service.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
+	stepsCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
 
 	steps, err := stepsCommand.Result()
 	if err != nil {
@@ -244,23 +198,23 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 		return
 	} else {
 		for _, step := range steps {
-			keysCommand := service.ReditClient.HKeys(step)
+			keysCommand := persistence.ReditClient.HKeys(step)
 			keys, err := keysCommand.Result()
 			if err != nil {
 				util.HandlerErrorResponse(response, http.StatusInternalServerError, err)
 				return
 			} else {
 				for _, key := range keys {
-					responseCommand := service.ReditClient.HDel(step, key)
+					responseCommand := persistence.ReditClient.HDel(step, key)
 					log.Debug("step hash: " + key + " response: ", responseCommand.Val())
 				}
 			}
 
-			remSnapShotFlowCommand := service.ReditClient.SRem(STEP_FLOWS_KEY, strings.Replace(step, STEP_NAMESPACE, "", 1))
+			remSnapShotFlowCommand := persistence.ReditClient.SRem(STEP_FLOWS_KEY, strings.Replace(step, STEP_NAMESPACE, "", 1))
 			log.Debug("step flow key: " + id + " response: ", remSnapShotFlowCommand.Val());
 		}
 
-		remStepResp := service.ReditClient.Del(STEPS_NAMESPACE + id);
+		remStepResp := persistence.ReditClient.Del(STEPS_NAMESPACE + id);
 		log.Debug("step: " + id + " response: ", remStepResp.Val());
 
 		response.Header().Set("Content-Type", "application/json")
@@ -269,29 +223,29 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 	}
 }
 
-func RollUp(id string) (model.RollUpObj, error) {
+func RollUp(id string) (RollUpObj, error) {
 
 	if id != "" && len(id) > 0 {
 		tokens := strings.Split(id, ":")
 		if len(tokens) != 2 {
-			return model.RollUpObj{}, errors.New("Invalid id format: " + id + " should be <flowid>:<sid>")
+			return RollUpObj{}, errors.New("Invalid id format: " + id + " should be <flowid>:<sid>")
 		}
 
 		intV, err := strconv.ParseInt(tokens[1], 10, 64)
 		if err != nil {
-			return model.RollUpObj{}, err
+			return RollUpObj{}, err
 		}
 
 		rolliup := RollUP(tokens[0], intV)
 		return rolliup, nil
 	} else {
-		return model.RollUpObj{}, errors.New("Invalid id format: " + id + " should be <flowid>:<sid>")
+		return RollUpObj{}, errors.New("Invalid id format: " + id + " should be <flowid>:<sid>")
 	}
 }
 
-func RollUP(flowId string, stepId int64) model.RollUpObj {
+func RollUP(flowId string, stepId int64) RollUpObj {
 
-	rollup := model.RollUpObj{}
+	rollup := RollUpObj{}
 	stepInfos, err := getStepInfo(flowId)
 	if err == nil {
 		//sort.Sort(stepInfos)
@@ -320,7 +274,7 @@ func RollUP(flowId string, stepId int64) model.RollUpObj {
 
 }
 
-func getStepInfo(flowID string) ([]model.StepInfo, error) {
+func getStepInfo(flowID string) ([]StepInfo, error) {
 	stepsID, err := ListallFlowStpids(flowID)
 	if err == nil {
 		if len(stepsID) <= 0 {
@@ -329,9 +283,9 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 
 		if len(stepsID) > 0 {
 
-			stepInfoLists := []model.StepInfo{}
+			stepInfoLists := []StepInfo{}
 			for _, stepId := range stepsID {
-				changeJsonCommand := service.ReditClient.HGetAll(stepId)
+				changeJsonCommand := persistence.ReditClient.HGetAll(stepId)
 				changeJson, err := changeJsonCommand.Result()
 				log.Info("Change json, %v", changeJson)
 				if err != nil {
@@ -342,7 +296,7 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 				if changeJson == nil {
 					log.Info("Step: " + stepId + " not found")
 				} else {
-					stepInfo := model.StepInfo{}
+					stepInfo := StepInfo{}
 					id, idErr := strconv.ParseInt(changeJson["id"], 10, 64)
 					if idErr != nil {
 						return nil, idErr
@@ -363,7 +317,7 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 						stepInfo.Status = status
 					}
 
-					stepData := model.StepData{}
+					stepData := StepData{}
 					stepDataStr := changeJson["stepData"]
 					err := json.Unmarshal([]byte(stepDataStr), &stepData)
 					if err != nil {
@@ -386,16 +340,16 @@ func getStepInfo(flowID string) ([]model.StepInfo, error) {
 		log.Error(err)
 	}
 
-	return []model.StepInfo{}, err
+	return []StepInfo{}, err
 
 }
 
 func ListallFlowStpids(flowID string) ([]string, error) {
-	resultCommand := service.ReditClient.LRange(STEPS_NAMESPACE + flowID, 0, -1)
+	resultCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + flowID, 0, -1)
 	return resultCommand.Result()
 }
 
-func addWorkItem(stepData model.StepData, rollupObj model.RollUpObj) {
+func addWorkItem(stepData StepData, rollupObj RollUpObj) {
 
 	wqchanges := stepData.WqChanges
 	if wqchanges != nil {
@@ -415,7 +369,7 @@ func addWorkItem(stepData model.StepData, rollupObj model.RollUpObj) {
 	}
 }
 
-func addAttribute(stepData model.StepData, rollupObj model.RollUpObj) {
+func addAttribute(stepData StepData, rollupObj RollUpObj) {
 
 	attributes := stepData.Attrs
 	if attributes != nil {
@@ -432,7 +386,7 @@ func addAttribute(stepData model.StepData, rollupObj model.RollUpObj) {
 	}
 }
 
-func AddTaskAndLinkDatas(stepData model.StepData, rollupObj model.RollUpObj) {
+func AddTaskAndLinkDatas(stepData StepData, rollupObj RollUpObj) {
 	//TaskChange
 	tdChanges := stepData.TdChanges
 	if tdChanges != nil {
@@ -473,10 +427,10 @@ func AddTaskAndLinkDatas(stepData model.StepData, rollupObj model.RollUpObj) {
 func GetStep(id string) (map[string]string, error) {
 
 	if strings.HasPrefix(id, STEP_NAMESPACE) {
-		command := service.ReditClient.HGetAll(id)
+		command := persistence.ReditClient.HGetAll(id)
 		return command.Result()
 	} else {
-		command := service.ReditClient.HGetAll(STEP_NAMESPACE + id)
+		command := persistence.ReditClient.HGetAll(STEP_NAMESPACE + id)
 		return command.Result()
 	}
 

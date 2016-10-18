@@ -1,4 +1,4 @@
-package model
+package flowinstance
 
 import (
 	"strings"

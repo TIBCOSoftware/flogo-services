@@ -6,7 +6,7 @@ import(
 	"net/http"
 	"encoding/json"
 	"github.com/op/go-logging"
-	"github.com/TIBCOSoftware/flogo-services/flow-store/service"
+	"github.com/TIBCOSoftware/flogo-services/flow-store/flow"
 	"github.com/TIBCOSoftware/flogo-services/flow-store/cmd"
 )
 var log = logging.MustGetLogger("main")
@@ -15,14 +15,14 @@ func main() {
 	fmt.Println("Start flow go server")
 	flowRouter := httprouter.New()
 
-	flowRouter.GET("/ping", service.Ping)
+	flowRouter.GET("/ping", flow.Ping)
 
 	//Flow
-	flowRouter.GET("/flows", service.ListAllFlow)
-	flowRouter.GET("/flows/:id", service.GetFlow)
-	flowRouter.GET("/flows/:id/metadata", service.GetFlowMetadata)
-	flowRouter.POST("/flows", service.SaveFlow)
-	flowRouter.DELETE("/flows/:id", service.DeleteFlow)
+	flowRouter.GET("/flows", flow.ListAllFlow)
+	flowRouter.GET("/flows/:id", flow.GetFlow)
+	flowRouter.GET("/flows/:id/metadata", flow.GetFlowMetadata)
+	flowRouter.POST("/flows", flow.SaveFlow)
+	flowRouter.DELETE("/flows/:id", flow.DeleteFlow)
 
 	if cmd.Port != nil && len(*cmd.Port) > 0 {
 		log.Info("Started server on localhost:" + *cmd.Port)

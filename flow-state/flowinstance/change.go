@@ -1,4 +1,4 @@
-package model
+package flowinstance
 
 type Change struct {
 	Name  string `json:"name"`
