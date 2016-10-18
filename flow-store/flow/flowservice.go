@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"gopkg.in/redis.v4"
 	"github.com/TIBCOSoftware/flogo-services/flow-store/cmd"
-	"github.com/TIBCOSoftware/flogo-services/flow-store/flowerror"
 	"errors"
 )
 
@@ -207,9 +206,9 @@ func HandlerErrorResponse(response http.ResponseWriter, code int, err error) {
 	fmt.Fprintf(response, "%s", returnApi)
 }
 
-func ConstructError(err error, code int, errType string) flowerror.FlowError {
+func ConstructError(err error, code int, errType string) FlowError {
 
-	return flowerror.FlowError{
+	return FlowError{
 		Code: code,
 		Message: err.Error(),
 		Type: errType,
@@ -226,7 +225,7 @@ func HandlerErrorResWithType(response http.ResponseWriter, code int, err error, 
 }
 
 func HandleInternalError(response http.ResponseWriter, err error) {
-	flowErorr := ConstructError(err, http.StatusInternalServerError, flowerror.InternalError)
+	flowErorr := ConstructError(err, http.StatusInternalServerError, InternalError)
 	returnApi, _ := json.Marshal(flowErorr)
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusInternalServerError)

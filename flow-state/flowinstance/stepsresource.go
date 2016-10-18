@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"encoding/json"
 	"time"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
 )
 
@@ -24,7 +23,7 @@ func ListRollup(response http.ResponseWriter, request *http.Request, params http
 		jsonFlow, _ := json.Marshal(rollup)
 		fmt.Fprintf(response, "%s", jsonFlow)
 	} else {
-		util.HandleInternalError(response, errors.New("List rollup error"))
+		HandleInternalError(response, errors.New("List rollup error"))
 		log.Errorf("List rollup error: %v", err)
 		return
 	}
@@ -36,7 +35,7 @@ func ListRollupMetadata(response http.ResponseWriter, request *http.Request, par
 	if id != "" && len(id) > 0 {
 		tokens := strings.Split(id, ":")
 		if len(tokens) != 2 {
-			util.HandleInternalError(response, errors.New("Invalid id format: " + id + " should be <flowid>:<sid>"))
+			HandleInternalError(response, errors.New("Invalid id format: " + id + " should be <flowid>:<sid>"))
 			log.Errorf("Invalid id format: " + id + " should be <flowid>:<sid>: %v")
 			return
 
@@ -49,7 +48,7 @@ func ListRollupMetadata(response http.ResponseWriter, request *http.Request, par
 			jsonFlow, _ := json.Marshal(rollup.Snapshot)
 			fmt.Fprintf(response, "%s", jsonFlow)
 		} else {
-			util.HandleInternalError(response, errors.New("List rollup error"))
+			HandleInternalError(response, errors.New("List rollup error"))
 			log.Errorf("List rollup error: %v", err)
 			return
 		}
@@ -64,7 +63,7 @@ func ListAlllStepData(response http.ResponseWriter, request *http.Request, param
 
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get steps flows keys error"))
+		HandleInternalError(response, errors.New("Get steps flows keys error"))
 		log.Errorf("Get steps flows keys error: %v", err)
 		return
 	} else {
@@ -72,7 +71,7 @@ func ListAlllStepData(response http.ResponseWriter, request *http.Request, param
 		for _, v := range vals {
 			step, err := GetStep(v)
 			if err != nil {
-				util.HandleInternalError(response, errors.New("Get steps error"))
+				HandleInternalError(response, errors.New("Get steps error"))
 				log.Errorf("Get steps error: %v", err)
 				return
 			} else {
@@ -93,7 +92,7 @@ func ListStepData(response http.ResponseWriter, request *http.Request, params ht
 
 	stepData, err := GetStep(id)
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get steps error"))
+		HandleInternalError(response, errors.New("Get steps error"))
 		log.Errorf("Get steps error: %v", err)
 		return
 	} else {
@@ -109,14 +108,14 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 	log.Debug("List flow step data " + id)
 
 	if strings.Contains(id, ":") {
-		util.HandleInternalError(response, errors.New("Invalid flow id format: " + id))
+		HandleInternalError(response, errors.New("Invalid flow id format: " + id))
 		return
 	}
 
 	stepsComamnd := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
 	steps, err := stepsComamnd.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get steps " + id + " error"))
+		HandleInternalError(response, errors.New("Get steps " + id + " error"))
 		log.Errorf("Get steps " + id + " error: %v", err)
 		return
 	} else {
@@ -124,7 +123,7 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 		for _, step := range steps {
 			step, err := GetStep(step)
 			if err != nil {
-				util.HandleInternalError(response, errors.New("Get steps error"))
+				HandleInternalError(response, errors.New("Get steps error"))
 				log.Errorf("Get steps error: %v", err)
 				return
 			}
@@ -145,7 +144,7 @@ func ListAllFlowStepIds(response http.ResponseWriter, request *http.Request, par
 	sliceCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get steps " + id + " error"))
+		HandleInternalError(response, errors.New("Get steps " + id + " error"))
 		log.Errorf("Get steps " + id + " error: %v", err)
 		return
 	} else {
@@ -193,7 +192,7 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 
 	steps, err := stepsCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get steps " + id + " error"))
+		HandleInternalError(response, errors.New("Get steps " + id + " error"))
 		log.Errorf("Get steps " + id + " error: %v", err)
 		return
 	} else {
@@ -201,7 +200,7 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 			keysCommand := persistence.ReditClient.HKeys(step)
 			keys, err := keysCommand.Result()
 			if err != nil {
-				util.HandlerErrorResponse(response, http.StatusInternalServerError, err)
+				HandlerErrorResponse(response, http.StatusInternalServerError, err)
 				return
 			} else {
 				for _, key := range keys {

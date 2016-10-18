@@ -5,7 +5,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"fmt"
 	"encoding/json"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 	"errors"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
 )
@@ -25,7 +24,7 @@ func GetFlowSnapshot(response http.ResponseWriter, request *http.Request, params
 
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get snapshot steps error"))
+		HandleInternalError(response, errors.New("Get snapshot steps error"))
 		log.Errorf("Get snapshot steps error: %v", err)
 		return
 	} else {

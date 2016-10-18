@@ -1,6 +1,6 @@
-package stateerror
+package flow
 
-type StateError struct {
+type FlowError struct {
 	Code    int      `json:"code"`
 	Message string `json:"message"`
 	Type    string        `json:type`

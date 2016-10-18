@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 	"errors"
 	"strconv"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
@@ -30,7 +29,7 @@ func GetSnapshotStatus(response http.ResponseWriter, request *http.Request, para
 	log.Debug("Get flow " + flowID + " status")
 	metadata, err := FlowStatus(flowID)
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
+		HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
 		log.Errorf("Get flow " + flowID + " status error: %v", err)
 		return
 	} else {
@@ -47,7 +46,7 @@ func ListFlowSteps(response http.ResponseWriter, request *http.Request, params h
 	log.Info("List flow " + flowID + " status")
 	results, err := ListSteps(flowID, false)
 	if err != nil {
-		util.HandleInternalError(response, errors.New("List flow " + flowID + " steps error"))
+		HandleInternalError(response, errors.New("List flow " + flowID + " steps error"))
 		log.Errorf("List flow " + flowID + " steps error: %v", err)
 		return
 	} else {
@@ -216,7 +215,7 @@ func GetSnapshotStep(response http.ResponseWriter, request *http.Request, params
 	resultCommand := persistence.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowId + ":" + stepId, "snapshotData")
 	vals, err := resultCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get flow " + flowId + " and step " + stepId + " snapshot data  error"))
+		HandleInternalError(response, errors.New("Get flow " + flowId + " and step " + stepId + " snapshot data  error"))
 		log.Errorf("Get flow " + flowId + " and step " + stepId + " snapshot data  error: %v", err)
 		return
 	} else {
@@ -236,7 +235,7 @@ func GetInstanceSteps(response http.ResponseWriter, request *http.Request, param
 
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		util.HandlerErrorResponse(response, http.StatusInternalServerError, err)
+		HandlerErrorResponse(response, http.StatusInternalServerError, err)
 		return
 	} else {
 		log.Info(vals)
@@ -252,7 +251,7 @@ func FlowMetadata(response http.ResponseWriter, request *http.Request, params ht
 
 	metadata, err := persistence.GetSnapshotMetdata(flowID)
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get flow " + flowID + " snapshot metadata error"))
+		HandleInternalError(response, errors.New("Get flow " + flowID + " snapshot metadata error"))
 		log.Errorf("Get flow " + flowID + " snapshot metadata error: %v", err)
 		return
 	}
@@ -266,7 +265,7 @@ func ListSnapshots(response http.ResponseWriter, request *http.Request, params h
 	resultCommand := persistence.ReditClient.SInter(SNAPSHOTS_FLOWS_KEY)
 	vals, err := resultCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get snapshot keys error"))
+		HandleInternalError(response, errors.New("Get snapshot keys error"))
 		log.Errorf("Get snapshot keys error error: %v", err)
 		return
 	} else {
@@ -275,7 +274,7 @@ func ListSnapshots(response http.ResponseWriter, request *http.Request, params h
 		for index, name := range vals {
 			metadata, err := persistence.GetSnapshotMetdata(name)
 			if err != nil {
-				util.HandleInternalError(response, errors.New("Get flow " + name + " snapshot metadata error"))
+				HandleInternalError(response, errors.New("Get flow " + name + " snapshot metadata error"))
 				log.Errorf("Get flow " + name + " snapshot metadata error: %v", err)
 				return
 			}
@@ -292,7 +291,7 @@ func ListInstanceStatus(response http.ResponseWriter, request *http.Request, _ h
 	command := persistence.ReditClient.Keys("flow:*")
 	vals, err := command.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get flow keys error"))
+		HandleInternalError(response, errors.New("Get flow keys error"))
 		log.Errorf("Get flow keys error: %v", err)
 		return
 	} else {
@@ -303,7 +302,7 @@ func ListInstanceStatus(response http.ResponseWriter, request *http.Request, _ h
 			result := persistence.ReditClient.HGetAll(element)
 			allResult, getallErr := result.Result()
 			if getallErr != nil {
-				util.HandleInternalError(response, errors.New("Get flow key data error"))
+				HandleInternalError(response, errors.New("Get flow key data error"))
 				log.Errorf("Get flow key data error: %v", getallErr)
 				return
 			} else {
@@ -323,7 +322,7 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 
 	content, err := ioutil.ReadAll(request.Body)
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Read body error"))
+		HandleInternalError(response, errors.New("Read body error"))
 		log.Errorf("Read body error: %v", err)
 		return
 	}
@@ -331,7 +330,7 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	contentMap := StepInfo{}
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
-		util.HandleInternalError(response, errors.New("Unmarshal step post body error"))
+		HandleInternalError(response, errors.New("Unmarshal step post body error"))
 		log.Debugf("Step content: ", string(content))
 		log.Errorf("Unmarshal step post body error %v", jsonerr)
 		return
@@ -344,7 +343,7 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	change["id"] = id
 	stepData, stepDataErr := json.Marshal(contentMap.StepData)
 	if (stepDataErr != nil) {
-		util.HandleInternalError(response, errors.New("Marshal step data error while save steps"))
+		HandleInternalError(response, errors.New("Marshal step data error while save steps"))
 		log.Errorf("Marshal step data error while save steps: %v", stepDataErr)
 	} else {
 		change["stepData"] = string(stepData)
@@ -364,7 +363,7 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	pushCommand := persistence.ReditClient.RPush(STEPS_NAMESPACE + flowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Save changes error"))
+		HandleInternalError(response, errors.New("Save changes error"))
 		log.Errorf("Save changes error: %v", err)
 		return
 	} else {
@@ -379,7 +378,7 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 
 	content, err := ioutil.ReadAll(request.Body)
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Read body error"))
+		HandleInternalError(response, errors.New("Read body error"))
 		log.Errorf("Read body error: %v", err)
 		return
 	}
@@ -387,7 +386,7 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 	contentMap := Snapshot{}
 	jsonerr := json.Unmarshal(content, &contentMap)
 	if jsonerr != nil {
-		util.HandleInternalError(response, errors.New("Unmarshal snapshot post body error"))
+		HandleInternalError(response, errors.New("Unmarshal snapshot post body error"))
 		log.Debugf("Snapshot content: ", string(content))
 		log.Errorf("Unmarshal snapshot post body error %v", jsonerr)
 		return
@@ -398,7 +397,7 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 	snapshot["id"] = strconv.FormatInt(contentMap.ID, 10)
 	v, snapErr := json.Marshal(contentMap.SnapshotData)
 	if (snapErr != nil) {
-		util.HandleInternalError(response, errors.New("Marshal step data error while save steps"))
+		HandleInternalError(response, errors.New("Marshal step data error while save steps"))
 		log.Errorf("Marshal step data error while save steps: %v", snapErr)
 	} else {
 		snapshot["snapshotData"] = string(v)
@@ -415,7 +414,7 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 	pushCommand := persistence.ReditClient.RPush(SNAPSHOTS_NAMESPACE + contentMap.FlowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Save snapshot changes error"))
+		HandleInternalError(response, errors.New("Save snapshot changes error"))
 		log.Errorf("Save snapshot changes error: %v", err)
 		return
 	} else {
@@ -434,7 +433,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 	snapshotsCommand := persistence.ReditClient.LRange(SNAPSHOTS_NAMESPACE + flowID, 0, -1)
 	snapshots, err := snapshotsCommand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get snapshot names error"))
+		HandleInternalError(response, errors.New("Get snapshot names error"))
 		log.Errorf("Get snapshot names error: %v", err)
 		return
 	} else {
@@ -443,7 +442,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 			keysCommand := persistence.ReditClient.HKeys(snapshot)
 			keys, err := keysCommand.Result()
 			if err != nil {
-				util.HandleInternalError(response, errors.New("Get snapshot keys error"))
+				HandleInternalError(response, errors.New("Get snapshot keys error"))
 				log.Errorf("Get snapshot keys error: %v", err)
 				return
 			} else {
@@ -459,7 +458,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 	log.Debug("snapshot: " + flowID + " response: ", remSnapShotRespComand.Val())
 	remSnapShotResp, err := remSnapShotRespComand.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Delete snapshot error"))
+		HandleInternalError(response, errors.New("Delete snapshot error"))
 		log.Errorf("Get snapshot error: %v", err)
 		return
 	}

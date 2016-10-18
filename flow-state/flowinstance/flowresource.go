@@ -8,7 +8,6 @@ import (
 	"strings"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
 
-	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 	"errors"
 )
 
@@ -17,7 +16,7 @@ func ListAllFlowStatus(response http.ResponseWriter, request *http.Request, _ ht
 	command := persistence.ReditClient.Keys("flow:*")
 	flowResults, err := command.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get flow from DB error"))
+		HandleInternalError(response, errors.New("Get flow from DB error"))
 		log.Errorf("Get all flow status error: %v", err)
 		return
 	} else {
@@ -28,7 +27,7 @@ func ListAllFlowStatus(response http.ResponseWriter, request *http.Request, _ ht
 			result := persistence.ReditClient.HGetAll(element)
 			allResult, getallErr := result.Result();
 			if getallErr != nil {
-				util.HandleInternalError(response, errors.New("Get flow " + element + "from DB error"))
+				HandleInternalError(response, errors.New("Get flow " + element + "from DB error"))
 				log.Errorf("Get flow " + element + "from DB error: %v", getallErr)
 				return
 			} else {
@@ -49,7 +48,7 @@ func GetFlowStatus(response http.ResponseWriter, request *http.Request, params h
 	flowID := params.ByName("flowID")
 	metadata, err := FlowStatus(flowID)
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
+		HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
 		log.Errorf("Get flow " + flowID + " status error: %v", err)
 		return
 	} else {
@@ -79,7 +78,7 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 	command := persistence.ReditClient.HKeys("flow:" + id)
 	vals, err := command.Result()
 	if err != nil {
-		util.HandleInternalError(response, errors.New("Get keys error while delete flow " + id + " error"))
+		HandleInternalError(response, errors.New("Get keys error while delete flow " + id + " error"))
 		log.Errorf("Get keys error while delete flow " + id + " error: %v", err)
 		return
 	} else {
@@ -87,7 +86,7 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 			result := persistence.ReditClient.HDel("flow:" + id, element)
 			allResult, getallErr := result.Result();
 			if getallErr != nil {
-				util.HandleInternalError(response, errors.New("Delete flow " + id + " error"))
+				HandleInternalError(response, errors.New("Delete flow " + id + " error"))
 				log.Errorf("Delete flow " + id + " error: %v", getallErr)
 				return
 			} else {
