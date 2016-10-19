@@ -20,7 +20,7 @@ var log = logging.MustGetLogger("service")
 
 func ListAllFlow(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	log.Debug("List all flows")
-	sliceCommand := persistence.ReditClient.SInter("flows")
+	sliceCommand := persistence.NewClient().SInter("flows")
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("List all flows error"))
@@ -51,7 +51,7 @@ func GetFlow(response http.ResponseWriter, request *http.Request, params httprou
 	id := params.ByName("id")
 	log.Debug("Get flow " + id)
 
-	sliceCommand := persistence.ReditClient.HGet("flow:" + id, "flow")
+	sliceCommand := persistence.NewClient().HGet("flow:" + id, "flow")
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get flow " + id + " error"))
@@ -116,7 +116,7 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 	}
 	flowMap["flow"] = string(b)
 
-	flowCommand := persistence.ReditClient.HMSet("flow:" + id, flowMap);
+	flowCommand := persistence.NewClient().HMSet("flow:" + id, flowMap);
 	vals, err := flowCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get flow from BD error, flow id: " + id))
@@ -124,7 +124,7 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 		return
 	} else {
 		log.Info(vals)
-		flowsCommand := persistence.ReditClient.SAdd("flows", id)
+		flowsCommand := persistence.NewClient().SAdd("flows", id)
 		_, err := flowsCommand.Result()
 		if err != nil {
 			HandleInternalError(response, errors.New("Save flow" + id + " into DB error."))
@@ -150,8 +150,8 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 	id := params.ByName("id")
 	log.Info("Delete flow " + id)
 
-	persistence.ReditClient.SRem("flows", id)
-	sliceCommand := persistence.ReditClient.Del("flows:" + id)
+	persistence.NewClient().SRem("flows", id)
+	sliceCommand := persistence.NewClient().Del("flows:" + id)
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Delete flow " + id + " error"))
@@ -166,9 +166,9 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 }
 
 func getMetdata(id string) (map[string]string, error) {
-	descCommand := persistence.ReditClient.HGet("flow:" + id, "description")
-	nameCommand := persistence.ReditClient.HGet("flow:" + id, "name");
-	createDateCommand := persistence.ReditClient.HGet("flow:" + id, "creationDate")
+	descCommand := persistence.NewClient().HGet("flow:" + id, "description")
+	nameCommand := persistence.NewClient().HGet("flow:" + id, "name");
+	createDateCommand := persistence.NewClient().HGet("flow:" + id, "creationDate")
 
 	resultMap := make(map[string]string)
 	resultMap["id"] = id

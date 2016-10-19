@@ -5,8 +5,16 @@ import (
 	"flag"
 )
 
-var RedisAddr = flag.String("addr", "localhost:6379", "The address of redis server, for example: localhost:6379")
-var ReditClient = redis.NewClient(&redis.Options{Addr: *RedisAddr, Password: ""})
+var RedisAddr = flag.String("addr", "flogo-redis:6379", "The address of redis server, for example: localhost:6379")
+
+var ReditClient *redis.Client = nil
+
+func NewClient() *redis.Client {
+	if ReditClient == nil {
+		ReditClient = redis.NewClient(&redis.Options{Addr: *RedisAddr, Password:"", })
+	}
+	return ReditClient
+}
 
 var SNAPSHOT_NAMESPACE = "snapshot:"
 
@@ -15,10 +23,11 @@ var SNAPSHOTS_NAMESPACE = "snapshots:"
 var SNAPSHOTS_FLOWS_KEY = "snapshotFlows"
 
 func GetSnapshotMetdata(flowID string) (map[string]string, error) {
-	statusComamnd := ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "status")
-	stateComamnd := ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "state")
-	dateCommand := ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "date")
-	idComamnd := ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID, "id")
+	client := NewClient()
+	statusComamnd := client.HGet(SNAPSHOT_NAMESPACE + flowID, "status")
+	stateComamnd := client.HGet(SNAPSHOT_NAMESPACE + flowID, "state")
+	dateCommand := client.HGet(SNAPSHOT_NAMESPACE + flowID, "date")
+	idComamnd := client.HGet(SNAPSHOT_NAMESPACE + flowID, "id")
 
 	metadata := make(map[string]string)
 	metadata["flowID"] = flowID

@@ -20,7 +20,7 @@ func GetFlowSnapshot(response http.ResponseWriter, request *http.Request, params
 	flowID := params.ByName("flowID")
 	log.Info("Get snapshop step flow " + flowID)
 
-	sliceCommand := persistence.ReditClient.HGetAll(SNAPSHOT_NAMESPACE + flowID)
+	sliceCommand := persistence.NewClient().HGetAll(SNAPSHOT_NAMESPACE + flowID)
 
 	vals, err := sliceCommand.Result()
 	if err != nil {

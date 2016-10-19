@@ -57,7 +57,7 @@ func ListRollupMetadata(response http.ResponseWriter, request *http.Request, par
 }
 
 func ListAlllStepData(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	sliceCommand := persistence.ReditClient.SInter(STEP_FLOWS_KEY)
+	sliceCommand := persistence.NewClient().SInter(STEP_FLOWS_KEY)
 
 	var results = []map[string]string{}
 
@@ -112,7 +112,7 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 		return
 	}
 
-	stepsComamnd := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
+	stepsComamnd := persistence.NewClient().LRange(STEPS_NAMESPACE + id, 0, -1)
 	steps, err := stepsComamnd.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get steps " + id + " error"))
@@ -141,7 +141,7 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 func ListAllFlowStepIds(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id := params.ByName("flowid")
 	log.Debug("list all flow step id " + id)
-	sliceCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
+	sliceCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + id, 0, -1)
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get steps " + id + " error"))
@@ -170,12 +170,12 @@ func SaveSteps(flowID string, id string, state string, status string, stepInfo s
 	statusMap := make(map[string]string)
 	statusMap["status"] = status
 
-	persistence.ReditClient.HMSet(FLOW_NAMESPACE + flowID, statusMap)
+	persistence.NewClient().HMSet(FLOW_NAMESPACE + flowID, statusMap)
 
-	persistence.ReditClient.SAdd("stepFlows", flowID + ":" + id)
-	persistence.ReditClient.HMSet(key, changes)
+	persistence.NewClient().SAdd("stepFlows", flowID + ":" + id)
+	persistence.NewClient().HMSet(key, changes)
 
-	pushCommand := persistence.ReditClient.RPush(STEPS_NAMESPACE + flowID, key)
+	pushCommand := persistence.NewClient().RPush(STEPS_NAMESPACE + flowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		return 0, err
@@ -188,7 +188,7 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 	id := params.ByName("flowid")
 	log.Info("Delete steps " + id)
 
-	stepsCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + id, 0, -1)
+	stepsCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + id, 0, -1)
 
 	steps, err := stepsCommand.Result()
 	if err != nil {
@@ -197,23 +197,23 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 		return
 	} else {
 		for _, step := range steps {
-			keysCommand := persistence.ReditClient.HKeys(step)
+			keysCommand := persistence.NewClient().HKeys(step)
 			keys, err := keysCommand.Result()
 			if err != nil {
 				HandlerErrorResponse(response, http.StatusInternalServerError, err)
 				return
 			} else {
 				for _, key := range keys {
-					responseCommand := persistence.ReditClient.HDel(step, key)
+					responseCommand := persistence.NewClient().HDel(step, key)
 					log.Debug("step hash: " + key + " response: ", responseCommand.Val())
 				}
 			}
 
-			remSnapShotFlowCommand := persistence.ReditClient.SRem(STEP_FLOWS_KEY, strings.Replace(step, STEP_NAMESPACE, "", 1))
+			remSnapShotFlowCommand := persistence.NewClient().SRem(STEP_FLOWS_KEY, strings.Replace(step, STEP_NAMESPACE, "", 1))
 			log.Debug("step flow key: " + id + " response: ", remSnapShotFlowCommand.Val());
 		}
 
-		remStepResp := persistence.ReditClient.Del(STEPS_NAMESPACE + id);
+		remStepResp := persistence.NewClient().Del(STEPS_NAMESPACE + id);
 		log.Debug("step: " + id + " response: ", remStepResp.Val());
 
 		response.Header().Set("Content-Type", "application/json")
@@ -284,7 +284,7 @@ func getStepInfo(flowID string) ([]StepInfo, error) {
 
 			stepInfoLists := []StepInfo{}
 			for _, stepId := range stepsID {
-				changeJsonCommand := persistence.ReditClient.HGetAll(stepId)
+				changeJsonCommand := persistence.NewClient().HGetAll(stepId)
 				changeJson, err := changeJsonCommand.Result()
 				log.Info("Change json, %v", changeJson)
 				if err != nil {
@@ -344,7 +344,7 @@ func getStepInfo(flowID string) ([]StepInfo, error) {
 }
 
 func ListallFlowStpids(flowID string) ([]string, error) {
-	resultCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + flowID, 0, -1)
+	resultCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + flowID, 0, -1)
 	return resultCommand.Result()
 }
 
@@ -426,10 +426,10 @@ func AddTaskAndLinkDatas(stepData StepData, rollupObj RollUpObj) {
 func GetStep(id string) (map[string]string, error) {
 
 	if strings.HasPrefix(id, STEP_NAMESPACE) {
-		command := persistence.ReditClient.HGetAll(id)
+		command := persistence.NewClient().HGetAll(id)
 		return command.Result()
 	} else {
-		command := persistence.ReditClient.HGetAll(STEP_NAMESPACE + id)
+		command := persistence.NewClient().HGetAll(STEP_NAMESPACE + id)
 		return command.Result()
 	}
 
