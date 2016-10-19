@@ -6,17 +6,22 @@ import (
 	"net/http"
 	"encoding/json"
 	"github.com/op/go-logging"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/cmd"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/flowinstance"
+	"flag"
 )
 
 var log = logging.MustGetLogger("main")
+var Port = flag.String("p", "9098", "The port of the server")
+func init() {
+	log.Info("Starting parse cmd line paramters")
+	flag.Parse() // get the arguments from command line
+}
 
 func main() {
 	fmt.Println("Start flow states go server")
 	stateRouter := httprouter.New()
 
-	//New release one V1 Apis
+	//New release V1 Apis
 	//create an instance
 	stateRouter.POST("/v1/instances/:id/snapshot", flowinstance.POSTSnapshot)
 	//store a step
@@ -25,7 +30,7 @@ func main() {
 	//get all steps for the instance
 	stateRouter.GET("/v1/instances/:id/steps", flowinstance.ListFlowSteps)
 	stateRouter.GET("/v1/instances/:id/status", flowinstance.GetSnapshotStatus)
-	stateRouter.GET("/v1/instances/:id", flowinstance.GetInstanceSteps)
+	stateRouter.GET("/v1/instances/:id", flowinstance.ListFlowSteps)
 	//get the specified snapshot
 	stateRouter.GET("/v1/instances/:id/snapshots/:snapshotId", flowinstance.GetSnapshotStep)
 
@@ -75,9 +80,9 @@ func main() {
 	stateRouter.POST("/steps", flowinstance.PostChange)
 	stateRouter.DELETE("/steps/:flowid", flowinstance.DeleteSteps)
 
-	if cmd.Port != nil && len(*cmd.Port) > 0 {
-		log.Info("Started server on localhost:" + *cmd.Port)
-		http.ListenAndServe(":" + *cmd.Port, &FlowServer{stateRouter})
+	if Port != nil && len(*Port) > 0 {
+		log.Info("Started server on localhost:" + *Port)
+		http.ListenAndServe(":" + *Port, &FlowServer{stateRouter})
 	} else {
 		log.Info("Started server on localhost:9090")
 		http.ListenAndServe(":9090", &FlowServer{stateRouter})

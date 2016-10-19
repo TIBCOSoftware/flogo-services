@@ -10,19 +10,17 @@ import (
 	"time"
 	"sync/atomic"
 	"strconv"
-	"gopkg.in/redis.v4"
-	"github.com/TIBCOSoftware/flogo-services/flow-store/cmd"
 	"errors"
+	"github.com/TIBCOSoftware/flogo-services/flow-store/persistence"
 )
 
-var ReditClient = redis.NewClient(&redis.Options{Addr: *cmd.RedisAddr, Password:"", })
 
 var flowId uint64 = 0
 var log = logging.MustGetLogger("service")
 
 func ListAllFlow(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	log.Debug("List all flows")
-	sliceCommand := ReditClient.SInter("flows")
+	sliceCommand := persistence.ReditClient.SInter("flows")
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("List all flows error"))
@@ -53,7 +51,7 @@ func GetFlow(response http.ResponseWriter, request *http.Request, params httprou
 	id := params.ByName("id")
 	log.Debug("Get flow " + id)
 
-	sliceCommand := ReditClient.HGet("flow:" + id, "flow")
+	sliceCommand := persistence.ReditClient.HGet("flow:" + id, "flow")
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get flow " + id + " error"))
@@ -118,7 +116,7 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 	}
 	flowMap["flow"] = string(b)
 
-	flowCommand := ReditClient.HMSet("flow:" + id, flowMap);
+	flowCommand := persistence.ReditClient.HMSet("flow:" + id, flowMap);
 	vals, err := flowCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get flow from BD error, flow id: " + id))
@@ -126,7 +124,7 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 		return
 	} else {
 		log.Info(vals)
-		flowsCommand := ReditClient.SAdd("flows", id)
+		flowsCommand := persistence.ReditClient.SAdd("flows", id)
 		_, err := flowsCommand.Result()
 		if err != nil {
 			HandleInternalError(response, errors.New("Save flow" + id + " into DB error."))
@@ -152,8 +150,8 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 	id := params.ByName("id")
 	log.Info("Delete flow " + id)
 
-	ReditClient.SRem("flows", id)
-	sliceCommand := ReditClient.Del("flows:" + id)
+	persistence.ReditClient.SRem("flows", id)
+	sliceCommand := persistence.ReditClient.Del("flows:" + id)
 	vals, err := sliceCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Delete flow " + id + " error"))
@@ -168,9 +166,9 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 }
 
 func getMetdata(id string) (map[string]string, error) {
-	descCommand := ReditClient.HGet("flow:" + id, "description")
-	nameCommand := ReditClient.HGet("flow:" + id, "name");
-	createDateCommand := ReditClient.HGet("flow:" + id, "creationDate")
+	descCommand := persistence.ReditClient.HGet("flow:" + id, "description")
+	nameCommand := persistence.ReditClient.HGet("flow:" + id, "name");
+	createDateCommand := persistence.ReditClient.HGet("flow:" + id, "creationDate")
 
 	resultMap := make(map[string]string)
 	resultMap["id"] = id

@@ -7,9 +7,15 @@ import(
 	"encoding/json"
 	"github.com/op/go-logging"
 	"github.com/TIBCOSoftware/flogo-services/flow-store/flow"
-	"github.com/TIBCOSoftware/flogo-services/flow-store/cmd"
+	"flag"
 )
 var log = logging.MustGetLogger("main")
+var Port = flag.String("p", "9099", "The port of the server")
+
+func init() {
+	log.Info("Starting parse cmd line paramters")
+	flag.Parse() // get the arguments from command line
+}
 
 func main() {
 	fmt.Println("Start flow go server")
@@ -24,9 +30,9 @@ func main() {
 	flowRouter.POST("/flows", flow.SaveFlow)
 	flowRouter.DELETE("/flows/:id", flow.DeleteFlow)
 
-	if cmd.Port != nil && len(*cmd.Port) > 0 {
-		log.Info("Started server on localhost:" + *cmd.Port)
-		http.ListenAndServe(":"+*cmd.Port, &FlowServer{flowRouter})
+	if Port != nil && len(*Port) > 0 {
+		log.Info("Started server on localhost:" + *Port)
+		http.ListenAndServe(":"+*Port, &FlowServer{flowRouter})
 	} else {
 		log.Info("Started server on localhost:9090")
 		http.ListenAndServe(":9090", &FlowServer{flowRouter})

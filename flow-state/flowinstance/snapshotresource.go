@@ -34,29 +34,3 @@ func GetFlowSnapshot(response http.ResponseWriter, request *http.Request, params
 		fmt.Fprintf(response, "%s", jsonFlow)
 	}
 }
-//
-//func FlowMetadata(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-//	flowID := params.ByName("flowID")
-//	log.Info("Get snapshot metadata, flow id: " + flowID)
-//	metadata, err := GetSnapshotMetdata(flowID)
-//	if err != nil {
-//		util.HandleInternalError(response, errors.New("Get snapshot metadata error"))
-//		log.Errorf("Get snapshot metadata error: %v", err)
-//		return
-//	}
-//	response.Header().Set("Content-Type", "application/json")
-//	jsonFlow, _ := json.Marshal(metadata)
-//	fmt.Fprintf(response, "%s", jsonFlow)
-//}
-
-//func ListSnapshots(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-//	ListSnapshots(response, request, params)
-//}
-//
-//func PostSnapshot(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-//	instance.POSTSnapshot(response, request, params)
-//}
-//
-//func DeleteFlow(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-//	instance.DeleteFLow(response, request, params)
-//}

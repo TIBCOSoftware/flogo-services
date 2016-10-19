@@ -219,7 +219,6 @@ func GetSnapshotStep(response http.ResponseWriter, request *http.Request, params
 		log.Errorf("Get flow " + flowId + " and step " + stepId + " snapshot data  error: %v", err)
 		return
 	} else {
-		log.Info("===========", vals)
 		response.Header().Set("Content-Type", "application/json")
 		response.WriteHeader(http.StatusOK)
 		fmt.Fprintf(response, "%s", vals)
@@ -418,7 +417,6 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 		log.Errorf("Save snapshot changes error: %v", err)
 		return
 	} else {
-		log.Info("----------", vals)
 		response.Header().Set("Content-Type", "application/json")
 		response.WriteHeader(http.StatusOK)
 		fmt.Fprintf(response, "%d", vals)

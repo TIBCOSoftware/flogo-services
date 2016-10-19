@@ -2,10 +2,11 @@ package persistence
 
 import (
 	"gopkg.in/redis.v4"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/cmd"
+	"flag"
 )
 
-var ReditClient = redis.NewClient(&redis.Options{Addr: *cmd.RedisAddr, Password: ""})
+var RedisAddr = flag.String("addr", "localhost:6379", "The address of redis server, for example: localhost:6379")
+var ReditClient = redis.NewClient(&redis.Options{Addr: *RedisAddr, Password: ""})
 
 var SNAPSHOT_NAMESPACE = "snapshot:"
 
@@ -41,4 +42,9 @@ func GetSnapshotMetdata(flowID string) (map[string]string, error) {
 		metadata["id"] = id
 	}
 	return metadata, err
+}
+
+
+func init() {
+	flag.Parse() // get the arguments from command line
 }
