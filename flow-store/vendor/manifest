@@ -1,0 +1,37 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/julienschmidt/httprouter",
+			"repository": "https://github.com/julienschmidt/httprouter",
+			"vcs": "git",
+			"revision": "d8ff598a019f2c7bad0980917a588193cf26666e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/op/go-logging",
+			"repository": "https://github.com/op/go-logging",
+			"vcs": "git",
+			"revision": "970db520ece77730c7e4724c61121037378659d9",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/bsm/ratelimit.v1",
+			"repository": "https://gopkg.in/bsm/ratelimit.v1",
+			"vcs": "git",
+			"revision": "db14e161995a5177acef654cb0dd785e8ee8bc22",
+			"branch": "v1",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/redis.v4",
+			"repository": "https://gopkg.in/redis.v4",
+			"vcs": "git",
+			"revision": "8a8d997ad58dc600d2ff0f64914102192f3b51ac",
+			"branch": "master",
+			"notests": true
+		}
+	]
+}

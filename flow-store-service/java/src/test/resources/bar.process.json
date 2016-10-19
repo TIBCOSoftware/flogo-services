@@ -1,1 +1,0 @@
-{"name":"bar","description":"bar flow descritions","flow":"{\"id\":1,\"typeId\":1,\"name\":\"bar\",\"rootTask\":{\"id\":1,\"typeId\":1,\"name\":\"root\",\"tasks\":[{\"id\":2,\"typeId\":1,\"name\":\"a\",\"tasks\":null,\"links\":null},{\"id\":3,\"typeId\":1,\"name\":\"b\",\"tasks\":null,\"links\":null}],\"links\":[{\"id\":1,\"typeId\":1,\"name\":\"\",\"to\":3,\"from\":2}]}}"}
