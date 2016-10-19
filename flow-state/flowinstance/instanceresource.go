@@ -64,7 +64,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	step := map[string]interface{}{}
 
-	changesCommand := persistence.ReditClient.LRange(STEPS_NAMESPACE + flowID, 0, -1)
+	changesCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + flowID, 0, -1)
 	changes, err := changesCommand.Result()
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 	}
 
 	for _, change := range changes {
-		changesJsonCommand := persistence.ReditClient.HGetAll(change)
+		changesJsonCommand := persistence.NewClient().HGetAll(change)
 		changesJson, err := changesJsonCommand.Result()
 		if err != nil {
 			return nil, err
@@ -107,7 +107,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 		snapshotDataObj := SnapshotData{}
 		for _, tdchange := range tdchanges {
 			taskId := tdchange.ID
-			jsonSnapshot := persistence.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
+			jsonSnapshot := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
 			if jsonSnapshot != "" {
 				steperr := json.Unmarshal([]byte(jsonSnapshot), &snapshotDataObj)
 				if steperr != nil {
@@ -144,7 +144,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 		}
 
 		if snapshotDataObj.ID == "" {
-			jsonSnapshot := persistence.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
+			jsonSnapshot := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
 			if jsonSnapshot != "" {
 				steperr := json.Unmarshal([]byte(jsonSnapshot), &snapshotDataObj)
 				if steperr != nil {
@@ -212,7 +212,7 @@ func GetSnapshotStep(response http.ResponseWriter, request *http.Request, params
 
 	log.Info("get snapshot step,  flow:" + flowId + " Step id:" + stepId)
 
-	resultCommand := persistence.ReditClient.HGet(SNAPSHOT_NAMESPACE + flowId + ":" + stepId, "snapshotData")
+	resultCommand := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE + flowId + ":" + stepId, "snapshotData")
 	vals, err := resultCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get flow " + flowId + " and step " + stepId + " snapshot data  error"))
@@ -229,8 +229,8 @@ func GetInstanceSteps(response http.ResponseWriter, request *http.Request, param
 	flowId := params.ByName("flowID")
 	log.Info("Get instance steps, flow " + flowId)
 
-	persistence.ReditClient.SRem("flows", flowId)
-	sliceCommand := persistence.ReditClient.Del("flows:" + flowId)
+	persistence.NewClient().SRem("flows", flowId)
+	sliceCommand := persistence.NewClient().Del("flows:" + flowId)
 
 	vals, err := sliceCommand.Result()
 	if err != nil {
@@ -261,7 +261,7 @@ func FlowMetadata(response http.ResponseWriter, request *http.Request, params ht
 }
 
 func ListSnapshots(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	resultCommand := persistence.ReditClient.SInter(SNAPSHOTS_FLOWS_KEY)
+	resultCommand := persistence.NewClient().SInter(SNAPSHOTS_FLOWS_KEY)
 	vals, err := resultCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get snapshot keys error"))
@@ -287,7 +287,7 @@ func ListSnapshots(response http.ResponseWriter, request *http.Request, params h
 }
 
 func ListInstanceStatus(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	command := persistence.ReditClient.Keys("flow:*")
+	command := persistence.NewClient().Keys("flow:*")
 	vals, err := command.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get flow keys error"))
@@ -298,7 +298,7 @@ func ListInstanceStatus(response http.ResponseWriter, request *http.Request, _ h
 		results := make([]map[string]string, len(vals))
 
 		for index, element := range vals {
-			result := persistence.ReditClient.HGetAll(element)
+			result := persistence.NewClient().HGetAll(element)
 			allResult, getallErr := result.Result()
 			if getallErr != nil {
 				HandleInternalError(response, errors.New("Get flow key data error"))
@@ -356,10 +356,10 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	//TODO error handling
 	statusMap := make(map[string]string)
 	statusMap["status"] = strconv.FormatInt(contentMap.Status, 10)
-	persistence.ReditClient.HMSet(FLOW_NAMESPACE + flowID, statusMap)
-	persistence.ReditClient.SAdd(STEP_FLOWS_KEY, flowID + ":" + id)
-	persistence.ReditClient.HMSet(key, change)
-	pushCommand := persistence.ReditClient.RPush(STEPS_NAMESPACE + flowID, key)
+	persistence.NewClient().HMSet(FLOW_NAMESPACE + flowID, statusMap)
+	persistence.NewClient().SAdd(STEP_FLOWS_KEY, flowID + ":" + id)
+	persistence.NewClient().HMSet(key, change)
+	pushCommand := persistence.NewClient().RPush(STEPS_NAMESPACE + flowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Save changes error"))
@@ -408,9 +408,9 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 	key := SNAPSHOT_NAMESPACE + contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10)
 
 	//TODO error handling
-	persistence.ReditClient.SAdd(SNAPSHOTS_FLOWS_KEY, contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10))
-	persistence.ReditClient.HMSet(key, snapshot)
-	pushCommand := persistence.ReditClient.RPush(SNAPSHOTS_NAMESPACE + contentMap.FlowID, key)
+	persistence.NewClient().SAdd(SNAPSHOTS_FLOWS_KEY, contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10))
+	persistence.NewClient().HMSet(key, snapshot)
+	pushCommand := persistence.NewClient().RPush(SNAPSHOTS_NAMESPACE + contentMap.FlowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Save snapshot changes error"))
@@ -428,7 +428,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 	log.Debug("Delete flow " + flowID)
 
 	//retrive snapshot names
-	snapshotsCommand := persistence.ReditClient.LRange(SNAPSHOTS_NAMESPACE + flowID, 0, -1)
+	snapshotsCommand := persistence.NewClient().LRange(SNAPSHOTS_NAMESPACE + flowID, 0, -1)
 	snapshots, err := snapshotsCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get snapshot names error"))
@@ -437,7 +437,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 	} else {
 
 		for _, snapshot := range snapshots {
-			keysCommand := persistence.ReditClient.HKeys(snapshot)
+			keysCommand := persistence.NewClient().HKeys(snapshot)
 			keys, err := keysCommand.Result()
 			if err != nil {
 				HandleInternalError(response, errors.New("Get snapshot keys error"))
@@ -445,14 +445,14 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 				return
 			} else {
 				for _, key := range keys {
-					response := persistence.ReditClient.HDel(snapshot, key)
+					response := persistence.NewClient().HDel(snapshot, key)
 					log.Debug("snapshot flow key: " + flowID + " response: ", response.Val())
 				}
 			}
 		}
 	}
 
-	remSnapShotRespComand := persistence.ReditClient.Del(SNAPSHOTS_NAMESPACE + flowID)
+	remSnapShotRespComand := persistence.NewClient().Del(SNAPSHOTS_NAMESPACE + flowID)
 	log.Debug("snapshot: " + flowID + " response: ", remSnapShotRespComand.Val())
 	remSnapShotResp, err := remSnapShotRespComand.Result()
 	if err != nil {

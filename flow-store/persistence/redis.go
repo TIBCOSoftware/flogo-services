@@ -5,6 +5,13 @@ import (
 	"flag"
 )
 
-var ReditClient = redis.NewClient(&redis.Options{Addr: *RedisAddr, Password:"", })
+var ReditClient *redis.Client = nil
 
-var RedisAddr = flag.String("addr", "localhost:6379", "The address of redis server, for example: localhost:6379")
+func NewClient() *redis.Client {
+	if ReditClient == nil {
+		ReditClient = redis.NewClient(&redis.Options{Addr: *RedisAddr, Password:"", })
+	}
+	return ReditClient
+}
+
+var RedisAddr = flag.String("addr", "flogo-redis:6379", "The address of redis server, for example: localhost:6379")
