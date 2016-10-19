@@ -43,8 +43,3 @@ func GetSnapshotMetdata(flowID string) (map[string]string, error) {
 	}
 	return metadata, err
 }
-
-
-func init() {
-	flag.Parse() // get the arguments from command line
-}
