@@ -23,6 +23,13 @@ func main() {
 
 	flowRouter.GET("/ping", flow.Ping)
 
+	//New Apis V1
+	flowRouter.GET("/v1/flows", flow.ListAllFlow)
+	flowRouter.GET("/v1/flows/:id", flow.GetFlow)
+	flowRouter.GET("/v1/flows/:id/metadata", flow.GetFlowMetadata)
+	flowRouter.POST("/v1/flows", flow.SaveFlow)
+	flowRouter.DELETE("/v1/flows/:id", flow.DeleteFlow)
+
 	//Flow
 	flowRouter.GET("/flows", flow.ListAllFlow)
 	flowRouter.GET("/flows/:id", flow.GetFlow)
