@@ -10,29 +10,55 @@ The Flogo Process Service is a service for managing process definitions that are
 
 ## Dependencies
 
-The services just depend on docker. You can install docker from [docker website](http://www.docker.com)
+The services just depend on [redis](http://redis.io/) server. You can start redis server from docker or anyway you like
+
+```bash
+docker run -p 6379:6379 --name flogo-redis -d redis
+```
 
 ## Building the services
 
-This will generate a docker compose start up shell script using the desired docker image tags. 
-if the BUILD_RELEASE_TAG is empty the 'latest' tag is used by default e.g.
+The State service and Flow service are both write by Golang, so please make sure you have installed Golang on your machine
+
+* Install gvt tool
+```bash
+go get -u github.com/FiloSottile/gvt
 ```
-#!/bin/bash
-script_root=$(dirname "${BASH_SOURCE}")
-export BUILD_RELEASE_TAG=0.2.0
-export DOCKER_REGISTRY=reldocker.tibco.com/
-docker-compose -f ${script_root}/docker-compose.yml up
-docker-compose rm -f
+* Clone flogo-services code from github to GOPATH
+```bash
+cd GOPATH/src/github.com/TIBCOSoftware/
+#Please create directory if it is not exist
+git clone https://github.com/TIBCOSoftware/flogo-services.git
 ```
-### Using private docker registry example
-`BUILD_RELEASE_TAG=1.0.0 DOCKER_REGISTRY=localhost:5000/ ./build-flogo-services.sh`
+* Step info flow-store and flow-state and restore dependencies
+```bash
+cd flogo-services/flow-store
+gvt restore
+cd ../flow-state
+gvt restore
+#gvt fetch all dependencies and put it into vendor directory
+```
+* Both state and flow service now are compilable go project
+* Build those 2 service
+```bash
+cd flogo-services/flow-store
+go test ./...
+go install ./...
+cd flogo-services/flow-state
+go test ./...
+go install ./...
+```
 
 ## Running the Services
+* Under GOPATH/bin folder where generated 2 executable file, flogostoreservice and flogostateservice
+* Start flow and state server
+```bash
+cd GOPATH/bin
+./flogostoreservice -p 9090 -addr localhost:6379
+./flogostateservice -p 9190 -addr localhost:6379
 
-### Using private docker registry example
-`BUILD_RELEASE_TAG=1.0.0 DOCKER_REGISTRY=localhost:5000/ ./docker-compose-start.sh`
-
-This starts both services in a docker environment. A `redis` image is required and is pulled as part of docker-compose up.
+#-p means the port of flow or state service. -addr means redis address
+```
 
 ## License
 flogo-services is licensed under a BSD-type license. See TIBCO LICENSE.txt for license text.
