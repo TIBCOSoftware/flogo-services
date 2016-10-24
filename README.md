@@ -30,7 +30,7 @@ cd GOPATH/src/github.com/TIBCOSoftware/
 #Please create directory if it is not exist
 git clone https://github.com/TIBCOSoftware/flogo-services.git
 ```
-* Step info flow-store and flow-state and restore dependencies
+* Restore dependencies
 ```bash
 cd flogo-services/flow-store
 gvt restore
@@ -39,7 +39,7 @@ gvt restore
 #gvt fetch all dependencies and put it into vendor directory
 ```
 * Both state and flow service now are compilable go project
-* Build those 2 service
+* Build those 2 services
 ```bash
 cd flogo-services/flow-store
 go test ./...
