@@ -50,12 +50,12 @@ go install ./...
 ```
 
 ## Running the Services
-* Under GOPATH/bin folder where generated 2 executable file, flogostoreservice and flogostateservice
+* Under GOPATH/bin folder where generated 2 executable file, fgstore and fgstate
 * Start flow and state server
 ```bash
 cd GOPATH/bin
-./flogostoreservice -p 9090 -addr localhost:6379
-./flogostateservice -p 9190 -addr localhost:6379
+./fgstore -p 9090 -addr localhost:6379
+./fgstate -p 9190 -addr localhost:6379
 
 #-p means the port of flow or state service. -addr means redis address
 ```
