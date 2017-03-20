@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/op/go-logging"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -12,9 +11,10 @@ import (
 	"errors"
 	"strconv"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
+	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
 
-var log = logging.MustGetLogger("instance")
+var log = logger.GetLogger("instance")
 var FLOW_NAMESPACE = "flow:"
 
 var STEP_NAMESPACE = "step:"

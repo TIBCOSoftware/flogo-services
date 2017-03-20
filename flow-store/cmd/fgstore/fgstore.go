@@ -5,11 +5,11 @@ import(
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"encoding/json"
-	"github.com/op/go-logging"
 	"github.com/TIBCOSoftware/flogo-services/flow-store/flow"
 	"flag"
+	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
-var log = logging.MustGetLogger("main")
+var log = logger.GetLogger("main")
 var Port = flag.String("p", "9099", "The port of the server")
 
 func init() {

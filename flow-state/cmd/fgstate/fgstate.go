@@ -5,12 +5,12 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"encoding/json"
-	"github.com/op/go-logging"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/flowinstance"
 	"flag"
+	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
 
-var log = logging.MustGetLogger("main")
+var log = logger.GetLogger("main")
 var Port = flag.String("p", "9098", "The port of the server")
 func init() {
 	log.Info("Starting parse cmd line paramters")
@@ -99,7 +99,7 @@ func (s *FlowServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	//Catching unexpected error.
 	defer func() {
 		if x := recover(); x != nil {
-			log.Fatal(x)
+			log.Error(x)
 			rw.WriteHeader(http.StatusInternalServerError)
 			err, _ := json.Marshal(x)
 			rw.Write(err)

@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"github.com/julienschmidt/httprouter"
 	"fmt"
-	"github.com/op/go-logging"
 	"encoding/json"
 	"io/ioutil"
 	"time"
@@ -12,11 +11,12 @@ import (
 	"strconv"
 	"errors"
 	"github.com/TIBCOSoftware/flogo-services/flow-store/persistence"
+	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
 
 
 var flowId uint64 = 0
-var log = logging.MustGetLogger("service")
+var log = logger.GetLogger("service")
 
 func ListAllFlow(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	log.Debug("List all flows")
