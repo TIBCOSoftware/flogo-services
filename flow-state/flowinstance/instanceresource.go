@@ -208,7 +208,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 
 func GetSnapshotStep(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	flowId := params.ByName("flowID")
-	stepId := params.ByName("id")
+	stepId := params.ByName("snapshotID")
 
 	log.Info("get snapshot step,  flow:" + flowId + " Step id:" + stepId)
 
