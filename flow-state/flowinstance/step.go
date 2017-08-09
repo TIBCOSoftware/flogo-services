@@ -1,81 +1,81 @@
 package flowinstance
 
 import (
-	"strings"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
+	"strings"
 )
 
 type StepInfo struct {
-	FlowID   string `json:"flowID"`
-	ID       int64 `json:"id"`
+	FlowID   string   `json:"flowID"`
+	ID       int64    `json:"id"`
 	StepData StepData `json:"stepData"`
-	Status   int64 `json:"status"`
-	State    int64 `json:"state"`
-	Date     string `json:"date"`
+	Status   int64    `json:"status"`
+	State    int64    `json:"state"`
+	Date     string   `json:"date"`
 }
 
 type StepData struct {
-	Status    int64 `json:"status"`
-	State     int64 `json:"state"`
+	Status    int64      `json:"status"`
+	State     int64      `json:"state"`
 	WqChanges []WqChange `json:"wqChanges"`
 	TdChanges []TdChange `json:"tdChanges"`
 	LdChanges []LdChange `json:"ldChanges"`
-	Attrs     []Attr `json:"attrs"`
+	Attrs     []Attr     `json:"attrs"`
 }
 
 type Snapshot struct {
-	ID           int64 `json:"id"`
-	FlowID       string `json:"flowID"`
-	State        int64 `json:"state"`
-	Status       int64 `json:"status"`
+	ID           int64        `json:"id"`
+	FlowID       string       `json:"flowID"`
+	State        int64        `json:"state"`
+	Status       int64        `json:"status"`
 	SnapshotData SnapshotData `json:"SnapshotData"`
 }
 
 type SnapshotData struct {
-	ID          string `json:"id"`
-	State       int64 `json:"state"`
-	Status      int64 `json:"status"`
+	ID          string      `json:"id"`
+	State       int64       `json:"state"`
+	Status      int64       `json:"status"`
 	Attrs       []Attribute `json:"attrs"`
-	FlowURI     string `json:"flowUri"`
-	WorkQueue   []WorkItem `json:"workQueue"`
+	FlowURI     string      `json:"flowUri"`
+	WorkQueue   []WorkItem  `json:"workQueue"`
 	RootTaskEnv RootTaskEnv `json:"rootTaskEnv"`
 }
 
 type RootTaskEnv struct {
-	ID       int64 `json:"id"`
-	TaskId   int64 `json:"taskId"`
-	TaskDatas []TaskData `json:"taskDatas"`
-	LinkDatas []LinkData `json:"linkDatas"`
+	ID        interface{} `json:"id"`
+	TaskId    interface{} `json:"taskId"`
+	TaskDatas []TaskData  `json:"taskDatas"`
+	LinkDatas []LinkData  `json:"linkDatas"`
 }
 
 type SnapshotInfo struct {
-	ID           int64 `json:"id"`
-	FlowID       string `json:"flowID"`
-	State        int64 `json:"state"`
-	Status       int64 `json:"status"`
+	ID           int64        `json:"id"`
+	FlowID       string       `json:"flowID"`
+	State        int64        `json:"state"`
+	Status       int64        `json:"status"`
 	Snapshot     SnapshotData `json:"snapshot"`
-	Date         string `json:"date"`
+	Date         string       `json:"date"`
 	SnapshotData SnapshotData `json:"snapshotData"`
 }
 
 type Attr struct {
 	ChgType int
-	Att Attribute `json:"Attribute"`
+	Att     Attribute `json:"Attribute"`
 }
 
 type Attribute struct {
-	Name  string `json:"name"`
-	Type  string `json:"type"`
+	Name  string      `json:"name"`
+	Type  string      `json:"type"`
 	Value interface{} `json:"value"`
 }
 
 type RollUpObj struct {
-	ID                 int64 `json:"id"`
-	Status             int64 `json:"status"`
-	State              int64 `json:"state"`
-	FlowURI            string `json:"flowUri"`
+	ID                 int64        `json:"id"`
+	Status             int64        `json:"status"`
+	State              int64        `json:"state"`
+	FlowURI            string       `json:"flowUri"`
 	Snapshot           SnapshotData `json:"snapshot"`
-	IgnoredTaskIds     []int64
+	IgnoredTaskIds     []interface{}
 	IgnoredLinkds      []int64
 	IgnoredWorkitemIds []int64
 	IgnoredAttrs       []string
@@ -92,15 +92,15 @@ type RollUpObj struct {
 //}
 
 func (r RollUpObj) UpdateWorkQueueItem(workitem WorkItem) {
-	if (!util.Contains(r.IgnoredWorkitemIds, workitem.ID)) {
-		results := append(r.IgnoredWorkitemIds, workitem.ID);
+	if !util.Contains(r.IgnoredWorkitemIds, workitem.ID) {
+		results := append(r.IgnoredWorkitemIds, workitem.ID)
 		r.IgnoredWorkitemIds = results
 		workqs := append(r.Snapshot.WorkQueue, workitem)
 		r.Snapshot.WorkQueue = workqs
 	}
 }
 func (r RollUpObj) AddWorkQueueItem(workitem WorkItem) {
-	if (!util.Contains(r.IgnoredWorkitemIds, workitem.ID)) {
+	if !util.Contains(r.IgnoredWorkitemIds, workitem.ID) {
 		workq := append(r.Snapshot.WorkQueue, workitem)
 		r.Snapshot.WorkQueue = workq
 	}
@@ -113,20 +113,20 @@ func (r RollUpObj) RemoveWorkQueueItem(workitem WorkItem) {
 
 func (r RollUpObj) AddTask(taskData TaskData) {
 	if taskData != (TaskData{}) {
-		if !util.Contains(r.IgnoredTaskIds, taskData.TaskId) {
+		if !util.InterfaceContains(r.IgnoredTaskIds, taskData.TaskId) {
 			taskDatas := append(r.Snapshot.RootTaskEnv.TaskDatas, taskData)
 			r.Snapshot.RootTaskEnv.TaskDatas = taskDatas
 		}
 	}
 }
 
-func (r RollUpObj) RemoveTask(taskId int64) {
+func (r RollUpObj) RemoveTask(taskId interface{}) {
 	tasks := r.Snapshot.RootTaskEnv.TaskDatas
 	for index, task := range tasks {
 		if task.TaskId == taskId {
 			result := []TaskData{}
 			result = append(result, tasks[0:index]...)
-			result = append(result, tasks[index + 1:]...)
+			result = append(result, tasks[index+1:]...)
 			r.Snapshot.RootTaskEnv.TaskDatas = result
 		}
 	}
@@ -134,7 +134,7 @@ func (r RollUpObj) RemoveTask(taskId int64) {
 
 func (r RollUpObj) UpdateTask(taskData TaskData) {
 	if taskData != (TaskData{}) {
-		if !util.Contains(r.IgnoredTaskIds, taskData.TaskId) {
+		if !util.InterfaceContains(r.IgnoredTaskIds, taskData.TaskId) {
 			ids := append(r.IgnoredTaskIds, taskData.TaskId)
 			r.IgnoredTaskIds = ids
 			r.RemoveTask(taskData.TaskId)
@@ -159,7 +159,7 @@ func (r RollUpObj) RemoveLink(linkId int64) {
 		if linkId == task.LinkId {
 			result := []LinkData{}
 			result = append(result, links[0:index]...)
-			result = append(result, links[index + 1:]...)
+			result = append(result, links[index+1:]...)
 			r.Snapshot.RootTaskEnv.LinkDatas = result
 		}
 	}
@@ -193,7 +193,7 @@ func (r RollUpObj) RemoveAttr(attr Attribute) {
 			if strings.EqualFold(task.Name, attr.Name) {
 				result := []Attribute{}
 				result = append(result, attrs[0:index]...)
-				result = append(result, attrs[index + 1:]...)
+				result = append(result, attrs[index+1:]...)
 				r.Snapshot.Attrs = result
 			}
 		}

@@ -1,15 +1,15 @@
 package persistence
 
 import (
-	"gopkg.in/redis.v4"
 	"flag"
+	"gopkg.in/redis.v4"
 )
 
 var ReditClient *redis.Client = nil
 
 func NewClient() *redis.Client {
 	if ReditClient == nil {
-		ReditClient = redis.NewClient(&redis.Options{Addr: *RedisAddr, Password:"", })
+		ReditClient = redis.NewClient(&redis.Options{Addr: *RedisAddr, Password: ""})
 	}
 	return ReditClient
 }

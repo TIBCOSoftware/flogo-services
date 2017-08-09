@@ -1,17 +1,18 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
+	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/TIBCOSoftware/flogo-services/flow-state/flowinstance"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"encoding/json"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/flowinstance"
-	"flag"
-	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
 
 var log = logger.GetLogger("main")
 var Port = flag.String("p", "9098", "The port of the server")
+
 func init() {
 	log.Info("Starting parse cmd line paramters")
 	flag.Parse() // get the arguments from command line
@@ -56,8 +57,6 @@ func main() {
 	// Save a new Step
 	stateRouter.POST("/v1/instances/steps", flowinstance.PostChange)
 	stateRouter.POST("/instances/steps", flowinstance.PostChange)
-
-
 
 	// Deprecated APIs
 
@@ -144,7 +143,7 @@ func main() {
 
 	if Port != nil && len(*Port) > 0 {
 		log.Info("Started server on localhost:" + *Port)
-		http.ListenAndServe(":" + *Port, &FlowServer{stateRouter})
+		http.ListenAndServe(":"+*Port, &FlowServer{stateRouter})
 	} else {
 		log.Info("Started server on localhost:9090")
 		http.ListenAndServe(":9090", &FlowServer{stateRouter})

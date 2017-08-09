@@ -1,29 +1,27 @@
 package flowinstance
 
 import (
-	"net/http"
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 type StateError struct {
-	Code    int      `json:"code"`
+	Code    int    `json:"code"`
 	Message string `json:"message"`
-	Type    string        `json:type`
+	Type    string `json:type`
 }
-
 
 const (
 	InternalError = "Internal DB Error"
 )
 
-
 func ConstructError(err error, code int, errType string) StateError {
 
 	return StateError{
-		Code: code,
+		Code:    code,
 		Message: err.Error(),
-		Type: errType,
+		Type:    errType,
 	}
 
 }

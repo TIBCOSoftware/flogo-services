@@ -1,15 +1,15 @@
 package flowinstance
 
 import (
-	"net/http"
-	"github.com/julienschmidt/httprouter"
-	"fmt"
-	"errors"
-	"strings"
-	"strconv"
 	"encoding/json"
-	"time"
+	"errors"
+	"fmt"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func ListRollup(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -35,7 +35,7 @@ func ListRollupMetadata(response http.ResponseWriter, request *http.Request, par
 	if id != "" && len(id) > 0 {
 		tokens := strings.Split(id, ":")
 		if len(tokens) != 2 {
-			HandleInternalError(response, errors.New("Invalid id format: " + id + " should be <flowid>:<sid>"))
+			HandleInternalError(response, errors.New("Invalid id format: "+id+" should be <flowid>:<sid>"))
 			log.Errorf("Invalid id format: " + id + " should be <flowid>:<sid>: %v")
 			return
 
@@ -108,15 +108,15 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 	log.Debug("List flow step data " + id)
 
 	if strings.Contains(id, ":") {
-		HandleInternalError(response, errors.New("Invalid flow id format: " + id))
+		HandleInternalError(response, errors.New("Invalid flow id format: "+id))
 		return
 	}
 
-	stepsComamnd := persistence.NewClient().LRange(STEPS_NAMESPACE + id, 0, -1)
+	stepsComamnd := persistence.NewClient().LRange(STEPS_NAMESPACE+id, 0, -1)
 	steps, err := stepsComamnd.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Get steps " + id + " error"))
-		log.Errorf("Get steps " + id + " error: %v", err)
+		HandleInternalError(response, errors.New("Get steps "+id+" error"))
+		log.Errorf("Get steps "+id+" error: %v", err)
 		return
 	} else {
 		var results = []map[string]string{}
@@ -141,11 +141,11 @@ func ListFlowStepData(response http.ResponseWriter, request *http.Request, param
 func ListAllFlowStepIds(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	id := params.ByName("flowid")
 	log.Debug("list all flow step id " + id)
-	sliceCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + id, 0, -1)
+	sliceCommand := persistence.NewClient().LRange(STEPS_NAMESPACE+id, 0, -1)
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Get steps " + id + " error"))
-		log.Errorf("Get steps " + id + " error: %v", err)
+		HandleInternalError(response, errors.New("Get steps "+id+" error"))
+		log.Errorf("Get steps "+id+" error: %v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -164,18 +164,18 @@ func SaveSteps(flowID string, id string, state string, status string, stepInfo s
 	changes["status"] = status
 	changes["date"] = time.Now().String()
 
-	key := STEP_NAMESPACE + flowID + ":" + id;
+	key := STEP_NAMESPACE + flowID + ":" + id
 
 	//TODO error handling
 	statusMap := make(map[string]string)
 	statusMap["status"] = status
 
-	persistence.NewClient().HMSet(FLOW_NAMESPACE + flowID, statusMap)
+	persistence.NewClient().HMSet(FLOW_NAMESPACE+flowID, statusMap)
 
-	persistence.NewClient().SAdd("stepFlows", flowID + ":" + id)
+	persistence.NewClient().SAdd("stepFlows", flowID+":"+id)
 	persistence.NewClient().HMSet(key, changes)
 
-	pushCommand := persistence.NewClient().RPush(STEPS_NAMESPACE + flowID, key)
+	pushCommand := persistence.NewClient().RPush(STEPS_NAMESPACE+flowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		return 0, err
@@ -188,12 +188,12 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 	id := params.ByName("flowid")
 	log.Info("Delete steps " + id)
 
-	stepsCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + id, 0, -1)
+	stepsCommand := persistence.NewClient().LRange(STEPS_NAMESPACE+id, 0, -1)
 
 	steps, err := stepsCommand.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Get steps " + id + " error"))
-		log.Errorf("Get steps " + id + " error: %v", err)
+		HandleInternalError(response, errors.New("Get steps "+id+" error"))
+		log.Errorf("Get steps "+id+" error: %v", err)
 		return
 	} else {
 		for _, step := range steps {
@@ -205,16 +205,16 @@ func DeleteSteps(response http.ResponseWriter, request *http.Request, params htt
 			} else {
 				for _, key := range keys {
 					responseCommand := persistence.NewClient().HDel(step, key)
-					log.Debug("step hash: " + key + " response: ", responseCommand.Val())
+					log.Debug("step hash: "+key+" response: ", responseCommand.Val())
 				}
 			}
 
 			remSnapShotFlowCommand := persistence.NewClient().SRem(STEP_FLOWS_KEY, strings.Replace(step, STEP_NAMESPACE, "", 1))
-			log.Debug("step flow key: " + id + " response: ", remSnapShotFlowCommand.Val());
+			log.Debug("step flow key: "+id+" response: ", remSnapShotFlowCommand.Val())
 		}
 
-		remStepResp := persistence.NewClient().Del(STEPS_NAMESPACE + id);
-		log.Debug("step: " + id + " response: ", remStepResp.Val());
+		remStepResp := persistence.NewClient().Del(STEPS_NAMESPACE + id)
+		log.Debug("step: "+id+" response: ", remStepResp.Val())
 
 		response.Header().Set("Content-Type", "application/json")
 		response.WriteHeader(http.StatusOK)
@@ -332,7 +332,7 @@ func getStepInfo(flowID string) ([]StepInfo, error) {
 
 			}
 
-			return stepInfoLists, nil;
+			return stepInfoLists, nil
 		}
 
 	} else {
@@ -344,7 +344,7 @@ func getStepInfo(flowID string) ([]StepInfo, error) {
 }
 
 func ListallFlowStpids(flowID string) ([]string, error) {
-	resultCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + flowID, 0, -1)
+	resultCommand := persistence.NewClient().LRange(STEPS_NAMESPACE+flowID, 0, -1)
 	return resultCommand.Result()
 }
 

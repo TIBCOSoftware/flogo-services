@@ -1,19 +1,18 @@
 package flow
 
 import (
-	"net/http"
-	"github.com/julienschmidt/httprouter"
-	"fmt"
 	"encoding/json"
-	"io/ioutil"
-	"time"
-	"sync/atomic"
-	"strconv"
 	"errors"
-	"github.com/TIBCOSoftware/flogo-services/flow-store/persistence"
+	"fmt"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/TIBCOSoftware/flogo-services/flow-store/persistence"
+	"github.com/julienschmidt/httprouter"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"sync/atomic"
+	"time"
 )
-
 
 var flowId uint64 = 0
 var log = logger.GetLogger("service")
@@ -32,8 +31,8 @@ func ListAllFlow(response http.ResponseWriter, request *http.Request, _ httprout
 		for index, element := range vals {
 			metdata, err := getMetdata(element)
 			if err != nil {
-				HandleInternalError(response, errors.New("Get " + element + " metadata error"))
-				log.Error("Get " + element + " metadata error :%v", err)
+				HandleInternalError(response, errors.New("Get "+element+" metadata error"))
+				log.Error("Get "+element+" metadata error :%v", err)
 				return
 			} else {
 				flows[index] = metdata
@@ -51,11 +50,11 @@ func GetFlow(response http.ResponseWriter, request *http.Request, params httprou
 	id := params.ByName("id")
 	log.Debug("Get flow " + id)
 
-	sliceCommand := persistence.NewClient().HGet("flow:" + id, "flow")
+	sliceCommand := persistence.NewClient().HGet("flow:"+id, "flow")
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Get flow " + id + " error"))
-		log.Error("Get flow " + id + " error :%v", err)
+		HandleInternalError(response, errors.New("Get flow "+id+" error"))
+		log.Error("Get flow "+id+" error :%v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -72,8 +71,8 @@ func GetFlowMetadata(response http.ResponseWriter, request *http.Request, params
 	result, err := getMetdata(id)
 	jsonFlow, _ := json.Marshal(result)
 	if err != nil {
-		HandleInternalError(response, errors.New("Get flow " + id + " metadata error"))
-		log.Error("Get flow " + id + " metadata error :%v", err)
+		HandleInternalError(response, errors.New("Get flow "+id+" metadata error"))
+		log.Error("Get flow "+id+" metadata error :%v", err)
 		return
 	}
 	fmt.Fprintf(response, "%s", jsonFlow)
@@ -96,7 +95,7 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 	}
 	var id string
 	var idtmp = flowInfo["id"]
-	if (idtmp != nil && nilOrEmpty(idtmp.(string)) ) {
+	if idtmp != nil && nilOrEmpty(idtmp.(string)) {
 		id = idtmp.(string)
 	} else {
 		id = strconv.FormatUint(incrementalFlowId(), 10)
@@ -116,26 +115,26 @@ func SaveFlow(response http.ResponseWriter, request *http.Request, _ httprouter.
 	}
 	flowMap["flow"] = string(b)
 
-	flowCommand := persistence.NewClient().HMSet("flow:" + id, flowMap);
+	flowCommand := persistence.NewClient().HMSet("flow:"+id, flowMap)
 	vals, err := flowCommand.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Get flow from BD error, flow id: " + id))
-		log.Error("Get flow from BD error, flow id: " + id + " :%v", err)
+		HandleInternalError(response, errors.New("Get flow from BD error, flow id: "+id))
+		log.Error("Get flow from BD error, flow id: "+id+" :%v", err)
 		return
 	} else {
 		log.Info(vals)
 		flowsCommand := persistence.NewClient().SAdd("flows", id)
 		_, err := flowsCommand.Result()
 		if err != nil {
-			HandleInternalError(response, errors.New("Save flow" + id + " into DB error."))
-			log.Error("Save flow" + id + " into DB error :%v", err)
+			HandleInternalError(response, errors.New("Save flow"+id+" into DB error."))
+			log.Error("Save flow"+id+" into DB error :%v", err)
 			return
 		} else {
 			result, err := getMetdata(id)
 			jsonFlow, _ := json.Marshal(result)
 			if err != nil {
-				HandleInternalError(response, errors.New("Get flow " + id + " metadata error"))
-				log.Error("Get flow " + id + " metadata error :%v", err)
+				HandleInternalError(response, errors.New("Get flow "+id+" metadata error"))
+				log.Error("Get flow "+id+" metadata error :%v", err)
 				return
 			}
 			response.Header().Set("Content-Type", "application/json")
@@ -154,8 +153,8 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 	sliceCommand := persistence.NewClient().Del("flows:" + id)
 	vals, err := sliceCommand.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Delete flow " + id + " error"))
-		log.Error("Delete flow " + id + " error :%v", err)
+		HandleInternalError(response, errors.New("Delete flow "+id+" error"))
+		log.Error("Delete flow "+id+" error :%v", err)
 		return
 	} else {
 		log.Info(vals)
@@ -166,9 +165,9 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 }
 
 func getMetdata(id string) (map[string]string, error) {
-	descCommand := persistence.NewClient().HGet("flow:" + id, "description")
-	nameCommand := persistence.NewClient().HGet("flow:" + id, "name");
-	createDateCommand := persistence.NewClient().HGet("flow:" + id, "creationDate")
+	descCommand := persistence.NewClient().HGet("flow:"+id, "description")
+	nameCommand := persistence.NewClient().HGet("flow:"+id, "name")
+	createDateCommand := persistence.NewClient().HGet("flow:"+id, "creationDate")
 
 	resultMap := make(map[string]string)
 	resultMap["id"] = id
@@ -207,9 +206,9 @@ func HandlerErrorResponse(response http.ResponseWriter, code int, err error) {
 func ConstructError(err error, code int, errType string) FlowError {
 
 	return FlowError{
-		Code: code,
+		Code:    code,
 		Message: err.Error(),
-		Type: errType,
+		Type:    errType,
 	}
 
 }
