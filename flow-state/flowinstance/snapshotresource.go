@@ -1,20 +1,19 @@
 package flowinstance
 
 import (
-	"net/http"
-	"github.com/julienschmidt/httprouter"
-	"fmt"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
 )
 
+var SNAPSHOT_NAMESPACE = "snapshot:"
 
-var SNAPSHOT_NAMESPACE = "snapshot:";
+var SNAPSHOTS_NAMESPACE = "snapshots:"
 
-var SNAPSHOTS_NAMESPACE = "snapshots:";
-
-var SNAPSHOTS_FLOWS_KEY = "snapshotFlows";
+var SNAPSHOTS_FLOWS_KEY = "snapshotFlows"
 
 func GetFlowSnapshot(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	flowID := params.ByName("flowID")

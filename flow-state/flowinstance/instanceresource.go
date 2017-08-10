@@ -2,16 +2,17 @@ package flowinstance
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
+	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
-	"errors"
-	"strconv"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
-	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
 
 var log = logger.GetLogger("instance")
@@ -23,14 +24,13 @@ var STEPS_NAMESPACE = "steps:"
 
 var STEP_FLOWS_KEY = "stepFlows"
 
-
 func GetSnapshotStatus(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	flowID := params.ByName("flowID")
 	log.Debug("Get flow " + flowID + " status")
 	metadata, err := FlowStatus(flowID)
 	if err != nil {
-		HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
-		log.Errorf("Get flow " + flowID + " status error: %v", err)
+		HandleInternalError(response, errors.New("Get flow "+flowID+" status error"))
+		log.Errorf("Get flow "+flowID+" status error: %v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -46,8 +46,8 @@ func ListFlowSteps(response http.ResponseWriter, request *http.Request, params h
 	log.Info("List flow " + flowID + " status")
 	results, err := ListSteps(flowID, false)
 	if err != nil {
-		HandleInternalError(response, errors.New("List flow " + flowID + " steps error"))
-		log.Errorf("List flow " + flowID + " steps error: %v", err)
+		HandleInternalError(response, errors.New("List flow "+flowID+" steps error"))
+		log.Errorf("List flow "+flowID+" steps error: %v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -64,7 +64,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	step := map[string]interface{}{}
 
-	changesCommand := persistence.NewClient().LRange(STEPS_NAMESPACE + flowID, 0, -1)
+	changesCommand := persistence.NewClient().LRange(STEPS_NAMESPACE+flowID, 0, -1)
 	changes, err := changesCommand.Result()
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 		snapshotDataObj := SnapshotData{}
 		for _, tdchange := range tdchanges {
 			taskId := tdchange.ID
-			jsonSnapshot := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
+			jsonSnapshot := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE+flowID+":"+stepId, "snapshotData").Val()
 			if jsonSnapshot != "" {
 				steperr := json.Unmarshal([]byte(jsonSnapshot), &snapshotDataObj)
 				if steperr != nil {
@@ -136,15 +136,15 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 						}
 					}
 				} else {
-					log.Debug("Task datas not found for snapshot: " + SNAPSHOT_NAMESPACE + flowID + ":", stepId)
+					log.Debug("Task datas not found for snapshot: "+SNAPSHOT_NAMESPACE+flowID+":", stepId)
 				}
 			} else {
-				log.Debug("Snapshot for instance step: " + flowID + ":", stepId, " not found")
+				log.Debug("Snapshot for instance step: "+flowID+":", stepId, " not found")
 			}
 		}
 
 		if snapshotDataObj.ID == "" {
-			jsonSnapshot := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE + flowID + ":" + stepId, "snapshotData").Val()
+			jsonSnapshot := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE+flowID+":"+stepId, "snapshotData").Val()
 			if jsonSnapshot != "" {
 				steperr := json.Unmarshal([]byte(jsonSnapshot), &snapshotDataObj)
 				if steperr != nil {
@@ -154,22 +154,22 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 		}
 
 		if snapshotDataObj.ID != "" {
-			var tmpTaskId int64
-			var stepTaskId int64
+			var tmpTaskId interface{}
+			var stepTaskId interface{}
 			wqChanges := stepDataObj.WqChanges
 			if wqChanges != nil && len(wqChanges) > 0 {
 				for _, wqchange := range wqChanges {
 					tmpTaskId = wqchange.Wtem.TaskId
 					chgType := wqchange.ChgType
 
-					if chgType == 3 && tmpTaskId != 1 {
+					if chgType == 3 && !util.IsRootTask(tmpTaskId) {
 						stepTaskId = tmpTaskId
 						break
 					}
 				}
 
-				if stepTaskId == 0 {
-					stepTaskId = 1
+				if stepTaskId == nil {
+					stepTaskId = util.GetRootId(tmpTaskId)
 				}
 			}
 
@@ -208,15 +208,15 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 
 func GetSnapshotStep(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	flowId := params.ByName("flowID")
-	stepId := params.ByName("id")
+	stepId := params.ByName("snapshotID")
 
 	log.Info("get snapshot step,  flow:" + flowId + " Step id:" + stepId)
 
-	resultCommand := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE + flowId + ":" + stepId, "snapshotData")
+	resultCommand := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE+flowId+":"+stepId, "snapshotData")
 	vals, err := resultCommand.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Get flow " + flowId + " and step " + stepId + " snapshot data  error"))
-		log.Errorf("Get flow " + flowId + " and step " + stepId + " snapshot data  error: %v", err)
+		HandleInternalError(response, errors.New("Get flow "+flowId+" and step "+stepId+" snapshot data  error"))
+		log.Errorf("Get flow "+flowId+" and step "+stepId+" snapshot data  error: %v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -250,8 +250,8 @@ func FlowMetadata(response http.ResponseWriter, request *http.Request, params ht
 
 	metadata, err := persistence.GetSnapshotMetdata(flowID)
 	if err != nil {
-		HandleInternalError(response, errors.New("Get flow " + flowID + " snapshot metadata error"))
-		log.Errorf("Get flow " + flowID + " snapshot metadata error: %v", err)
+		HandleInternalError(response, errors.New("Get flow "+flowID+" snapshot metadata error"))
+		log.Errorf("Get flow "+flowID+" snapshot metadata error: %v", err)
 		return
 	}
 	response.Header().Set("Content-Type", "application/json")
@@ -273,8 +273,8 @@ func ListSnapshots(response http.ResponseWriter, request *http.Request, params h
 		for index, name := range vals {
 			metadata, err := persistence.GetSnapshotMetdata(name)
 			if err != nil {
-				HandleInternalError(response, errors.New("Get flow " + name + " snapshot metadata error"))
-				log.Errorf("Get flow " + name + " snapshot metadata error: %v", err)
+				HandleInternalError(response, errors.New("Get flow "+name+" snapshot metadata error"))
+				log.Errorf("Get flow "+name+" snapshot metadata error: %v", err)
 				return
 			}
 			results[index] = metadata
@@ -341,7 +341,7 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	change["flowID"] = flowID
 	change["id"] = id
 	stepData, stepDataErr := json.Marshal(contentMap.StepData)
-	if (stepDataErr != nil) {
+	if stepDataErr != nil {
 		HandleInternalError(response, errors.New("Marshal step data error while save steps"))
 		log.Errorf("Marshal step data error while save steps: %v", stepDataErr)
 	} else {
@@ -356,10 +356,10 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	//TODO error handling
 	statusMap := make(map[string]string)
 	statusMap["status"] = strconv.FormatInt(contentMap.Status, 10)
-	persistence.NewClient().HMSet(FLOW_NAMESPACE + flowID, statusMap)
-	persistence.NewClient().SAdd(STEP_FLOWS_KEY, flowID + ":" + id)
+	persistence.NewClient().HMSet(FLOW_NAMESPACE+flowID, statusMap)
+	persistence.NewClient().SAdd(STEP_FLOWS_KEY, flowID+":"+id)
 	persistence.NewClient().HMSet(key, change)
-	pushCommand := persistence.NewClient().RPush(STEPS_NAMESPACE + flowID, key)
+	pushCommand := persistence.NewClient().RPush(STEPS_NAMESPACE+flowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Save changes error"))
@@ -395,7 +395,7 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 	snapshot["flowID"] = contentMap.FlowID
 	snapshot["id"] = strconv.FormatInt(contentMap.ID, 10)
 	v, snapErr := json.Marshal(contentMap.SnapshotData)
-	if (snapErr != nil) {
+	if snapErr != nil {
 		HandleInternalError(response, errors.New("Marshal step data error while save steps"))
 		log.Errorf("Marshal step data error while save steps: %v", snapErr)
 	} else {
@@ -408,9 +408,9 @@ func POSTSnapshot(response http.ResponseWriter, request *http.Request, params ht
 	key := SNAPSHOT_NAMESPACE + contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10)
 
 	//TODO error handling
-	persistence.NewClient().SAdd(SNAPSHOTS_FLOWS_KEY, contentMap.FlowID + ":" + strconv.FormatInt(contentMap.ID, 10))
+	persistence.NewClient().SAdd(SNAPSHOTS_FLOWS_KEY, contentMap.FlowID+":"+strconv.FormatInt(contentMap.ID, 10))
 	persistence.NewClient().HMSet(key, snapshot)
-	pushCommand := persistence.NewClient().RPush(SNAPSHOTS_NAMESPACE + contentMap.FlowID, key)
+	pushCommand := persistence.NewClient().RPush(SNAPSHOTS_NAMESPACE+contentMap.FlowID, key)
 	vals, err := pushCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Save snapshot changes error"))
@@ -428,7 +428,7 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 	log.Debug("Delete flow " + flowID)
 
 	//retrive snapshot names
-	snapshotsCommand := persistence.NewClient().LRange(SNAPSHOTS_NAMESPACE + flowID, 0, -1)
+	snapshotsCommand := persistence.NewClient().LRange(SNAPSHOTS_NAMESPACE+flowID, 0, -1)
 	snapshots, err := snapshotsCommand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Get snapshot names error"))
@@ -446,14 +446,14 @@ func DeleteFLow(response http.ResponseWriter, request *http.Request, params http
 			} else {
 				for _, key := range keys {
 					response := persistence.NewClient().HDel(snapshot, key)
-					log.Debug("snapshot flow key: " + flowID + " response: ", response.Val())
+					log.Debug("snapshot flow key: "+flowID+" response: ", response.Val())
 				}
 			}
 		}
 	}
 
 	remSnapShotRespComand := persistence.NewClient().Del(SNAPSHOTS_NAMESPACE + flowID)
-	log.Debug("snapshot: " + flowID + " response: ", remSnapShotRespComand.Val())
+	log.Debug("snapshot: "+flowID+" response: ", remSnapShotRespComand.Val())
 	remSnapShotResp, err := remSnapShotRespComand.Result()
 	if err != nil {
 		HandleInternalError(response, errors.New("Delete snapshot error"))

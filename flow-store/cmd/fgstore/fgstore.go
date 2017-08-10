@@ -1,14 +1,15 @@
 package main
 
-import(
+import (
+	"encoding/json"
+	"flag"
 	"fmt"
+	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/TIBCOSoftware/flogo-services/flow-store/flow"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"encoding/json"
-	"github.com/TIBCOSoftware/flogo-services/flow-store/flow"
-	"flag"
-	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
+
 var log = logger.GetLogger("main")
 var Port = flag.String("p", "9099", "The port of the server")
 
@@ -44,8 +45,8 @@ func main() {
 		log.Info("Started server on localhost:9090")
 		http.ListenAndServe(":9090", &FlowServer{flowRouter})
 
-	}}
-
+	}
+}
 
 type FlowServer struct {
 	r *httprouter.Router

@@ -1,8 +1,9 @@
 package flowinstance
+
 import (
-	"net/http"
-	"github.com/julienschmidt/httprouter"
 	"fmt"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
 )
 
 func Ping(response http.ResponseWriter, request *http.Request, _ httprouter.Params) {

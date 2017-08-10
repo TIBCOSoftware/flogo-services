@@ -1,12 +1,12 @@
 package flowinstance
 
 import (
-	"net/http"
-	"github.com/julienschmidt/httprouter"
-	"fmt"
 	"encoding/json"
-	"strings"
+	"fmt"
 	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
+	"strings"
 
 	"errors"
 )
@@ -25,10 +25,10 @@ func ListAllFlowStatus(response http.ResponseWriter, request *http.Request, _ ht
 
 		for index, element := range flowResults {
 			result := persistence.NewClient().HGetAll(element)
-			allResult, getallErr := result.Result();
+			allResult, getallErr := result.Result()
 			if getallErr != nil {
-				HandleInternalError(response, errors.New("Get flow " + element + "from DB error"))
-				log.Errorf("Get flow " + element + "from DB error: %v", getallErr)
+				HandleInternalError(response, errors.New("Get flow "+element+"from DB error"))
+				log.Errorf("Get flow "+element+"from DB error: %v", getallErr)
 				return
 			} else {
 				allResult["id"] = strings.Replace(element, "flow:", "", 1)
@@ -48,8 +48,8 @@ func GetFlowStatus(response http.ResponseWriter, request *http.Request, params h
 	flowID := params.ByName("flowID")
 	metadata, err := FlowStatus(flowID)
 	if err != nil {
-		HandleInternalError(response, errors.New("Get flow " + flowID + " status error"))
-		log.Errorf("Get flow " + flowID + " status error: %v", err)
+		HandleInternalError(response, errors.New("Get flow "+flowID+" status error"))
+		log.Errorf("Get flow "+flowID+" status error: %v", err)
 		return
 	} else {
 		response.Header().Set("Content-Type", "application/json")
@@ -60,7 +60,7 @@ func GetFlowStatus(response http.ResponseWriter, request *http.Request, params h
 }
 
 func FlowStatus(flowID string) (map[string]string, error) {
-	command := persistence.NewClient().HGet("flow:" + flowID, "status")
+	command := persistence.NewClient().HGet("flow:"+flowID, "status")
 	vals, err := command.Result()
 	if err != nil {
 		return nil, err
@@ -78,16 +78,16 @@ func DeleteFlow(response http.ResponseWriter, request *http.Request, params http
 	command := persistence.NewClient().HKeys("flow:" + id)
 	vals, err := command.Result()
 	if err != nil {
-		HandleInternalError(response, errors.New("Get keys error while delete flow " + id + " error"))
-		log.Errorf("Get keys error while delete flow " + id + " error: %v", err)
+		HandleInternalError(response, errors.New("Get keys error while delete flow "+id+" error"))
+		log.Errorf("Get keys error while delete flow "+id+" error: %v", err)
 		return
 	} else {
 		for _, element := range vals {
-			result := persistence.NewClient().HDel("flow:" + id, element)
-			allResult, getallErr := result.Result();
+			result := persistence.NewClient().HDel("flow:"+id, element)
+			allResult, getallErr := result.Result()
 			if getallErr != nil {
-				HandleInternalError(response, errors.New("Delete flow " + id + " error"))
-				log.Errorf("Delete flow " + id + " error: %v", getallErr)
+				HandleInternalError(response, errors.New("Delete flow "+id+" error"))
+				log.Errorf("Delete flow "+id+" error: %v", getallErr)
 				return
 			} else {
 				response.Header().Set("Content-Type", "application/json")
