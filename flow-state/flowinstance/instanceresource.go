@@ -105,6 +105,9 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 
 		tdchanges := stepDataObj.TdChanges
 		snapshotDataObj := SnapshotData{}
+
+		taskStates := make(map[string]int64)
+
 		for _, tdchange := range tdchanges {
 			taskId := tdchange.ID
 			jsonSnapshot := persistence.NewClient().HGet(SNAPSHOT_NAMESPACE+flowID+":"+stepId, "snapshotData").Val()
@@ -125,6 +128,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 							log.Debug("stepId: ", stepId)
 							taskMetadata["taskId"] = taskData.TaskId
 							taskMetadata["attributes"] = attrs
+							taskStates[toString(taskData.TaskId)] = taskData.State
 							if attrs != nil {
 								attributes := attrs.([]interface{})
 								if len(attributes) > 0 {
@@ -183,6 +187,10 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 			step["taskId"] = stepTaskId
 			step["id"] = stepId
 
+			if taskState, ok :=  taskStates[toString(stepTaskId)]; ok {
+				step["taskState"] = taskState
+			}
+
 			flowMetadata = make(map[string]interface{})
 			step["tasks"] = tasks
 			steps = append(steps, step)
@@ -204,6 +212,26 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 	result["steps"] = steps
 
 	return result, nil
+}
+
+func toString(val interface{}) string {
+	switch t := val.(type) {
+	case string:
+		return t
+	case int:
+		return strconv.Itoa(t)
+	case int64:
+		return  strconv.Itoa(int(t))
+	case nil:
+		return "___ERROR___"
+	default:
+		b, err := json.Marshal(t)
+		if err != nil {
+			fmt.Printf("Unable to Coerce %#v to string\n", t)
+			return "___ERROR___"
+		}
+		return string(b)
+	}
 }
 
 func GetSnapshotStep(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
