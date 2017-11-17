@@ -128,7 +128,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 							log.Debug("stepId: ", stepId)
 							taskMetadata["taskId"] = taskData.TaskId
 							taskMetadata["attributes"] = attrs
-							taskStates[toString(taskData.TaskId)] = taskData.State
+							//taskStates[toString(taskData.TaskId)] = taskData.State
 							if attrs != nil {
 								attributes := attrs.([]interface{})
 								if len(attributes) > 0 {
@@ -145,6 +145,8 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 			} else {
 				log.Debug("Snapshot for instance step: "+flowID+":", stepId, " not found")
 			}
+
+			taskStates[toString(tdchange.TaskData.TaskId)] = tdchange.TaskData.State
 		}
 
 		if snapshotDataObj.ID == "" {
