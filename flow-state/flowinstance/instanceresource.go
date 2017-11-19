@@ -63,6 +63,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 	flowMetadata := map[string]interface{}{}
 	result := map[string]interface{}{}
 	step := map[string]interface{}{}
+	taskStates := make(map[string]int64)
 
 	changesCommand := persistence.NewClient().LRange(STEPS_NAMESPACE+flowID, 0, -1)
 	changes, err := changesCommand.Result()
@@ -105,8 +106,6 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 
 		tdchanges := stepDataObj.TdChanges
 		snapshotDataObj := SnapshotData{}
-
-		taskStates := make(map[string]int64)
 
 		for _, tdchange := range tdchanges {
 			taskId := tdchange.ID
