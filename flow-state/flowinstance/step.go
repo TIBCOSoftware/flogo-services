@@ -1,13 +1,15 @@
 package flowinstance
 
 import (
-	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 	"strings"
+
+	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
 )
 
 type StepInfo struct {
 	FlowID   string   `json:"flowID"`
 	ID       int64    `json:"id"`
+	FlowURI  string   `json:"flowURI"`
 	StepData StepData `json:"stepData"`
 	Status   int64    `json:"status"`
 	State    int64    `json:"state"`

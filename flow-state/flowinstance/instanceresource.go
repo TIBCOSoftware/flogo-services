@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/TIBCOSoftware/flogo-lib/logger"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
-	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
-	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/TIBCOSoftware/flogo-services/flow-state/persistence"
+	"github.com/TIBCOSoftware/flogo-services/flow-state/util"
+	"github.com/julienschmidt/httprouter"
 )
 
 var log = logger.GetLogger("instance")
@@ -188,7 +189,7 @@ func ListSteps(flowID string, withStatus bool) (map[string]interface{}, error) {
 			step["taskId"] = stepTaskId
 			step["id"] = stepId
 
-			if taskState, ok :=  taskStates[toString(stepTaskId)]; ok {
+			if taskState, ok := taskStates[toString(stepTaskId)]; ok {
 				step["taskState"] = taskState
 			}
 
@@ -222,7 +223,7 @@ func toString(val interface{}) string {
 	case int:
 		return strconv.Itoa(t)
 	case int64:
-		return  strconv.Itoa(int(t))
+		return strconv.Itoa(int(t))
 	case nil:
 		return "___ERROR___"
 	default:
@@ -369,6 +370,7 @@ func PostChange(response http.ResponseWriter, request *http.Request, _ httproute
 	id := strconv.FormatInt(contentMap.ID, 10)
 	change["flowID"] = flowID
 	change["id"] = id
+	change["flowURI"] = contentMap.FlowURI
 	stepData, stepDataErr := json.Marshal(contentMap.StepData)
 	if stepDataErr != nil {
 		HandleInternalError(response, errors.New("Marshal step data error while save steps"))

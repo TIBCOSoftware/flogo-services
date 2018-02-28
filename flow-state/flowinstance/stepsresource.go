@@ -253,13 +253,20 @@ func RollUP(flowId string, stepId int64) RollUpObj {
 			if stepInfo.ID <= stepId {
 				if stepId == stepInfo.ID {
 					rollup.ID = stepInfo.ID
+
 					rollup.State = stepInfo.State
 					rollup.Status = stepInfo.Status
-					rollup.FlowURI = stepInfo.FlowID
 
 					rollup.Snapshot.State = stepInfo.State
 					rollup.Snapshot.Status = stepInfo.Status
-					rollup.Snapshot.FlowURI = stepInfo.FlowID
+
+					if len(stepInfo.FlowURI) == 0 {
+						rollup.FlowURI = stepInfo.FlowID
+						rollup.Snapshot.FlowURI = stepInfo.FlowID
+					} else {
+						rollup.FlowURI = stepInfo.FlowURI
+						rollup.Snapshot.FlowURI = stepInfo.FlowURI
+					}
 				}
 
 				addWorkItem(stepData, rollup)
@@ -303,6 +310,7 @@ func getStepInfo(flowID string) ([]StepInfo, error) {
 					stepInfo.ID = id
 					stepInfo.Date = changeJson["date"]
 					stepInfo.FlowID = changeJson["flowID"]
+					stepInfo.FlowURI = changeJson["flowURI"]
 					state, stateErr := strconv.ParseInt(changeJson["state"], 10, 64)
 					if stateErr != nil {
 						return nil, stateErr
