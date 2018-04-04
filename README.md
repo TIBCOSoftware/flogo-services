@@ -61,4 +61,4 @@ cd GOPATH/bin
 ```
 
 ## License
-flogo-services is licensed under a BSD-type license. See TIBCO LICENSE.txt for license text.
+flogo-services is licensed under a BSD-type license. See [LICENSE](LICENSE) for license text.
